@@ -12,6 +12,19 @@ function SkeletonCard() {
   );
 }
 
+function EmptyState() {
+  return (
+    <div className="mx-auto max-w-[700px] bg-white rounded-2xl border border-slate-200 shadow-sm p-10 text-center">
+      <div className="text-6xl mb-4">📖</div>
+      <h3 className="text-xl font-semibold text-slate-800 mb-1">Brak aktualności</h3>
+      <p className="text-slate-600">
+        Nie znaleziono żadnych artykułów dla wybranych filtrów.
+        <br />Spróbuj zmienić kryteria wyszukiwania.
+      </p>
+    </div>
+  );
+}
+
 export default function NewsList({ items, loading }: { items: NewsItem[]; loading: boolean }) {
   if (loading) {
     return (
@@ -21,7 +34,11 @@ export default function NewsList({ items, loading }: { items: NewsItem[]; loadin
     );
   }
   if (!items.length) {
-    return <div className="p-6 text-slate-600">Brak wyników dla wybranych filtrów.</div>;
+    return (
+      <div className="p-8">
+        <EmptyState />
+      </div>
+    );
   }
   return (
     <div className="p-5 grid grid-cols-1 gap-3">

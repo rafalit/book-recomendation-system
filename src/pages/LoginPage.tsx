@@ -19,11 +19,17 @@ export default function LoginPage() {
       const form = new URLSearchParams();
       form.append("username", email.toLowerCase());
       form.append("password", password);
+
       const res = await axios.post("http://127.0.0.1:8000/login", form, {
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
       });
-      localStorage.setItem("token", res.data.access_token);
-      axios.defaults.headers.common["Authorization"] = `Bearer ${res.data.access_token}`;
+      const token = res.data.access_token;
+      localStorage.setItem("token", token);
+      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+
+      const me = await axios.get("http://127.0.0.1:8000/me");
+      localStorage.setItem("user", JSON.stringify(me.data));
+
       navigate("/home", { replace: true });
     } catch (err: any) {
       alert(err?.response?.data?.detail ?? "Błąd logowania");

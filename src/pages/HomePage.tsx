@@ -24,20 +24,18 @@ function datePasses(dateStr?: string | null, range: Filters["timeRange"] = "any"
   return diff <= limits[range];
 }
 
+const isGoogleHost = (h?: string | null) => !!h && /(^|\.)google\./i.test(h);
+
 function publisherOf(n: NewsItem): string | null {
-  if (n.snippet) {
-    const div = document.createElement("div");
-    div.innerHTML = n.snippet;
-    const a = div.querySelector("a[href]");
-    if (a) {
-      try {
-        return new URL(a.getAttribute("href") || "").hostname.replace(/^www\./, "");
-      } catch {/* ignore */}
-    }
-  }
+  const d1 = n.publisher_domain && !isGoogleHost(n.publisher_domain) ? n.publisher_domain : null;
+  if (d1) return d1;
+
+  const d2 = n.link ? hostFrom(n.link) : null;
+  if (d2 && !isGoogleHost(d2)) return d2;
+
   const m = n.title.match(/[-–—]\s*([^–—-]+)$/);
-  if (m) return m[1].trim();
-  return n.link ? hostFrom(n.link) : null;
+  const label = m ? m[1].trim() : null;
+  return label && !isGoogleHost(label) ? label : null;
 }
 
 export default function HomePage() {
@@ -53,7 +51,6 @@ export default function HomePage() {
     sortBy: "newest",
   });
 
-  // Konfiguracja (lista uczelni)
   useEffect(() => {
     axios
       .get<Config>("http://127.0.0.1:8000/meta/config")
@@ -61,12 +58,8 @@ export default function HomePage() {
       .catch(() => setCfg({ domain_to_uni: {}, university_faculties: {}, titles: [] }));
   }, []);
 
-  const universities = useMemo(() => {
-    if (!cfg) return [];
-    return Object.keys(cfg.university_faculties);
-  }, [cfg]);
+  const universities = useMemo(() => (cfg ? Object.keys(cfg.university_faculties) : []), [cfg]);
 
-  // Pobierz newsy dla wybranej uczelni / wszystkich
   useEffect(() => {
     if (!cfg) return;
     const fetchNews = async () => {
@@ -83,9 +76,7 @@ export default function HomePage() {
           );
           const merged = res.flatMap((r) => r.data);
           const byLink = new Map<string, NewsItem>();
-          merged.forEach((n) => {
-            if (n.link) byLink.set(n.link, n);
-          });
+          merged.forEach((n) => n.link && byLink.set(n.link, n));
           setRaw(Array.from(byLink.values()));
         } else {
           const r = await axios.get<NewsItem[]>("http://127.0.0.1:8000/news", {
@@ -102,7 +93,6 @@ export default function HomePage() {
     fetchNews();
   }, [cfg, selected, universities]);
 
-  // Lista dostępnych wydawców (domen) z aktualnego zestawu wyników
   const publishersAll = useMemo(() => {
     const s = new Set<string>();
     raw.forEach((n) => {
@@ -112,7 +102,6 @@ export default function HomePage() {
     return Array.from(s).sort();
   }, [raw]);
 
-  // Zastosowanie filtrów
   const filtered = useMemo(() => {
     let arr = raw.slice();
 
@@ -138,7 +127,6 @@ export default function HomePage() {
       arr = arr.filter((n) => datePasses(n.date, filters.timeRange));
     }
 
-    // sortowanie po dacie
     arr.sort((a, b) => {
       const ta = Date.parse(a.date ?? "");
       const tb = Date.parse(b.date ?? "");
@@ -151,13 +139,18 @@ export default function HomePage() {
   }, [raw, filters]);
 
   return (
-    <div className="min-h-screen bg-slate-100">
-      <TopNav fullName="Jan Kowalski" />
+    // 100vh + brak głównego scrolla
+    <div className="h-screen overflow-hidden bg-slate-100 flex flex-col">
+      <TopNav />
 
-      {/* szeroki layout */}
-      <div className="mx-auto max-w-[1400px] h-[calc(100vh-64px)] grid grid-cols-[300px,1fr]">
-        {/* Lewy panel uczelni (osobny scroll) */}
-        <div className="h-full overflow-y-auto bg-white border-r">
+      {/* Wysokość: 100vh - 80px (TopNav ma h-20) */}
+      <div
+        className="mx-auto max-w-[2000px] px-2 py-4 w-full
+             h-[calc(100vh-80px)] grid grid-cols-1 md:grid-cols-[400px,1fr] gap-4 overflow-hidden"
+      >
+
+        {/* LEWA KARTA: pełna wysokość + wewnętrzny scroll */}
+        <div className="h-full overflow-hidden">
           <UniversitySidebar
             universities={universities}
             selected={selected}
@@ -165,13 +158,10 @@ export default function HomePage() {
           />
         </div>
 
-        {/* Prawa kolumna z newsami (osobny scroll) */}
-        <main className="h-full overflow-y-auto bg-white">
-          {/* Sticky nagłówek + filtry */}
-          <div className="sticky top-0 z-10 bg-white">
-            <div className="px-5 py-2 text-slate-600 text-sm border-b border-slate-200">
-              {selected === "wszystkie" ? "Wszystkie uczelnie" : selected}
-            </div>
+        {/* PRAWA KARTA: filtry (góra) + scrollowana lista (dół) */}
+        <section className="bg-white rounded-2xl shadow-sm border border-slate-200
+                          h-full flex flex-col overflow-hidden">
+          <div className="p-4 border-b shrink-0">
             <NewsFilters
               publishersAll={publishersAll}
               value={filters}
@@ -179,11 +169,12 @@ export default function HomePage() {
               resultCount={filtered.length}
             />
           </div>
-
-          {/* Lista kart */}
-          <NewsList items={filtered} loading={loading} />
-        </main>
+          <div className="flex-1 overflow-y-auto">
+            <NewsList items={filtered} loading={loading} />
+          </div>
+        </section>
       </div>
     </div>
   );
 }
+
