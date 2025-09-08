@@ -58,7 +58,12 @@ export default function HomePage() {
       .catch(() => setCfg({ domain_to_uni: {}, university_faculties: {}, titles: [] }));
   }, []);
 
-  const universities = useMemo(() => (cfg ? Object.keys(cfg.university_faculties) : []), [cfg]);
+  const universities = useMemo(() => {
+    if (!cfg) return [];
+    return Object.keys(cfg.university_faculties).sort((a, b) =>
+      a.localeCompare(b, "pl", { sensitivity: "base" })
+    );
+  }, [cfg]);
 
   useEffect(() => {
     if (!cfg) return;

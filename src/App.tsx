@@ -3,6 +3,7 @@ import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import ResetPassword from "./pages/ResetPassword";
 import HomePage from "./pages/HomePage";
+import ContactPage from "./pages/ContactPage";  
 import ProtectedRoute from "./components/router/ProtectedRoute";
 import { AuthProvider } from "./components/auth/AuthContext";
 
@@ -19,6 +20,7 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/contact" element={<ContactPage />} />
 
           {/* /home tylko po zalogowaniu */}
           <Route
