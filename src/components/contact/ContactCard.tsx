@@ -211,7 +211,7 @@ export default function ContactCard({ data }: { data: ContactData }) {
           {header.logoUrl && (
             <div
               aria-hidden
-              className="pointer-events-none select-none absolute inset-y-0 left-0 w-[220px] md:w-[300px] opacity-[0.10] z-0 hidden sm:block"
+              className="pointer-events-none select-none absolute inset-y-0 left-0 w-[220px] md:w-[300px] opacity-[0.80] z-0 hidden sm:block"
             >
               <img
                 src={header.logoUrl}
@@ -225,7 +225,7 @@ export default function ContactCard({ data }: { data: ContactData }) {
           {header.logoUrl && (
             <div
               aria-hidden
-              className="pointer-events-none select-none absolute inset-y-0 right-0 w-[220px] md:w-[300px] opacity-[0.10] z-0 hidden sm:block"
+              className="pointer-events-none select-none absolute inset-y-0 right-0 w-[220px] md:w-[300px] opacity-[0.80] z-0 hidden sm:block"
             >
               <img
                 src={header.logoUrl}
