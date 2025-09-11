@@ -1,36 +1,43 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+// AuthContext.tsx (skrót)
 import axios from "axios";
+import React, { createContext, useEffect, useState, useContext } from "react";
 
-type User = any; // nie zakładamy sztywnego schematu; mapujemy w TopNav
-
-type AuthCtx = {
-  user: User | null;
-  setUser: (u: User | null) => void;
-};
-
-const Ctx = createContext<AuthCtx>({ user: null, setUser: () => {} });
+type User = any;
+type AuthCtx = { user: User | null; token: string | null; setToken: (t: string | null) => void };
+const Ctx = createContext<AuthCtx>({ user: null, token: null, setToken: () => {} });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [token, setToken] = useState<string | null>(() => localStorage.getItem("token"));
   const [user, setUser] = useState<User | null>(null);
 
-  // wczytaj z localStorage po odświeżeniu
   useEffect(() => {
-    const token = localStorage.getItem("token");
     if (token) {
       axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-      const cached = localStorage.getItem("user");
-      if (cached) setUser(JSON.parse(cached));
-      // opcjonalnie odśwież me:
-      axios.get("http://127.0.0.1:8000/me").then(r => {
-        setUser(r.data);
-        localStorage.setItem("user", JSON.stringify(r.data));
-      }).catch(() => {});
+      axios
+        .get("http://127.0.0.1:8000/me")
+        .then(r => setUser(r.data))
+        .catch(err => {
+          if (err?.response?.status === 401) {
+            // wygasł / nieprawidłowy – wyloguj „po cichu”
+            delete axios.defaults.headers.common["Authorization"];
+            localStorage.removeItem("token");
+            setToken(null);
+            setUser(null);
+          } else {
+            console.info("Nie udało się pobrać /me:", err?.message || err);
+          }
+        });
+    } else {
+      delete axios.defaults.headers.common["Authorization"];
+      setUser(null);
     }
-  }, []);
+  }, [token]);
 
-  return <Ctx.Provider value={{ user, setUser }}>{children}</Ctx.Provider>;
+  useEffect(() => {
+    if (token) localStorage.setItem("token", token);
+  }, [token]);
+
+  return <Ctx.Provider value={{ user, token, setToken }}>{children}</Ctx.Provider>;
 }
 
-export function useAuth() {
-  return useContext(Ctx);
-}
+export const useAuth = () => useContext(Ctx);

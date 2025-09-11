@@ -88,15 +88,29 @@ function cleanedPreview(title: string, snippet?: string | null): string {
   div.innerHTML = snippet;
   let text = (div.textContent || div.innerText || "").trim().replace(/\s+/g, " ");
 
-  const norm = (s: string) => s.toLowerCase().replace(/[\s\-–—:;,.!?\"“”'’]+/g, " ").trim();
+  const norm = (s: string) =>
+    s.toLowerCase().replace(/[\s\-–—:;,.!?\"“”'’]+/g, " ").trim();
   if (norm(text) === norm(title) || norm(text).startsWith(norm(title))) return "";
 
   const parts = text.split(/(?<=[\.!?…])\s+/).filter(Boolean);
   const joined = parts.slice(0, 3).join(" ");
   const MAX = 280;
-  const cut = joined.length > MAX ? joined.slice(0, MAX).replace(/\s+\S*$/, "") + "…" : joined;
+  const cut =
+    joined.length > MAX
+      ? joined.slice(0, MAX).replace(/\s+\S*$/, "") + "…"
+      : joined;
   return cut.length < 40 ? "" : cut;
 }
+
+// placeholder jako data URL (zero requestów, brak 404)
+const PLACEHOLDER_DATA_URL =
+  "data:image/svg+xml;utf8," +
+  encodeURIComponent(
+    `<svg xmlns='http://www.w3.org/2000/svg' width='128' height='128'>
+       <rect width='100%' height='100%' fill='#e2e8f0'/>
+       <text x='50%' y='54%' text-anchor='middle' font-size='64' fill='#64748b'>📰</text>
+     </svg>`
+  );
 
 export default function NewsCard({
   title,
@@ -111,30 +125,22 @@ export default function NewsCard({
   const pub = resolvePublisher(title, link, source ?? undefined, snippet ?? undefined);
   const preview = cleanedPreview(title, snippet);
 
-  // ── ŁAŃCUCH FAVIKON ────────────────────────────────────────────────────────
   const host = publisher_domain || hostFrom(link) || undefined;
 
-  const GOOGLE_FALLBACK = "https://www.google.com/s2/favicons?domain=news.google.com&sz=128";
-
-  const candidates = useMemo(() => {
-    const arr = [
-      publisher_favicon || undefined,                                                // 1) z backendu
-      host ? `https://icons.duckduckgo.com/ip3/${host}.ico` : undefined,             // 2) DuckDuckGo
-      host ? `https://www.google.com/s2/favicons?domain=${host}&sz=128` : undefined, // 3) Google S2 dla hosta
-      host ? `https://${host}/favicon.ico` : undefined,                              // 4) /favicon.ico z domeny
-      GOOGLE_FALLBACK,                                                               // 5) stały „G”
-    ].filter(Boolean) as string[];
-    return Array.from(new Set(arr)); // bez duplikatów
+  const initialFavicon = useMemo(() => {
+    if (publisher_favicon) return publisher_favicon;
+    return host
+      ? `https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&url=https://${host}&size=128`
+      : PLACEHOLDER_DATA_URL;
   }, [publisher_favicon, host]);
 
-  const [favIndex, setFavIndex] = useState(0);
-  const faviconSrc = candidates[favIndex];
+  const [faviconSrc, setFaviconSrc] = useState(initialFavicon);
 
   const handleFaviconError = () => {
-    setFavIndex(i => (i < candidates.length - 1 ? i + 1 : i));
+    if (faviconSrc !== PLACEHOLDER_DATA_URL) {
+      setFaviconSrc(PLACEHOLDER_DATA_URL);
+    }
   };
-
-  // ──────────────────────────────────────────────────────────────────────────
 
   return (
     <a
@@ -152,6 +158,7 @@ export default function NewsCard({
                 alt=""
                 className="h-4 w-4 rounded-sm"
                 loading="lazy"
+                referrerPolicy="no-referrer"
                 onError={handleFaviconError}
               />
             ) : (
