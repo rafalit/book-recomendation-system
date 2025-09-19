@@ -1,5 +1,7 @@
-import { Bell } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+// src/components/TopNav.tsx
+import { useEffect, useRef, useState } from "react";
+import { Bell, ChevronDown, LogOut, User } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 
 const links = [
@@ -23,7 +25,6 @@ function displayName(u: any): string {
 }
 function displaySubtitle(u: any): string {
   if (!u) return "";
-  // tytuł/rola + uczelnia (użyj jakichkolwiek pól, które backend zwraca)
   const title = u.title || u.academic_title || (u.role === "student" ? "Student" : u.role);
   const uni = u.university || u.university_name || u.affiliation;
   return [title, uni].filter(Boolean).join(" • ");
@@ -31,7 +32,29 @@ function displaySubtitle(u: any): string {
 
 export default function TopNav() {
   const { pathname } = useLocation();
-  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { user, setToken } = useAuth();
+
+  // dropdown
+  const [open, setOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const onDocClick = (e: MouseEvent) => {
+      if (!menuRef.current) return;
+      if (!menuRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, []);
+
+  const handleLogout = () => {
+    // wyczyść auth
+    setToken(null);
+    localStorage.removeItem("token");
+    localStorage.removeItem("user"); // jeśli gdzieś trzymasz
+    navigate("/login");
+  };
 
   return (
     <header className="h-20 bg-gradient-to-r from-indigo-700 to-blue-600 text-white">
@@ -75,18 +98,54 @@ export default function TopNav() {
             </span>
           </Link>
 
+          {/* USER DROPDOWN */}
+          <div className="relative" ref={menuRef}>
+            <button
+              onClick={() => setOpen((o) => !o)}
+              className="px-4 h-12 inline-flex items-center rounded-full bg-white/10 hover:bg-white/20 text-sm"
+              title="Profil"
+              aria-haspopup="menu"
+              aria-expanded={open}
+            >
+              <div className="h-8 w-8 rounded-full bg-white/20 mr-3 grid place-items-center text-lg">👤</div>
+              <div className="leading-tight text-left">
+                <div className="font-medium text-base">{displayName(user)}</div>
+                <div className="text-white/80 text-sm -mt-0.5">{displaySubtitle(user)}</div>
+              </div>
+              <ChevronDown size={18} className="ml-2 opacity-80" />
+            </button>
 
-          <Link
-            to="/profile"
-            className="px-4 h-12 inline-flex items-center rounded-full bg-white/10 hover:bg-white/20 text-sm"
-            title="Profil"
-          >
-            <div className="h-8 w-8 rounded-full bg-white/20 mr-3 grid place-items-center text-lg">👤</div>
-            <div className="leading-tight">
-              <div className="font-medium text-base">{displayName(user)}</div>
-              <div className="text-white/80 text-sm -mt-0.5">{displaySubtitle(user)}</div>
-            </div>
-          </Link>
+            {open && (
+              <div
+                className="
+    absolute right-0 mt-2 w-64 z-50 rounded-xl
+    bg-blue-500
+    text-white border border-white/10 shadow-xl overflow-hidden
+  "
+                role="menu"
+              >
+                <Link
+                  to="/profile"
+                  className="flex items-center gap-2 px-4 py-3 hover:bg-white/10 transition"
+                  role="menuitem"
+                >
+                  <User size={18} className="opacity-90" />
+                  <span className="font-medium">Profil użytkownika</span>
+                </Link>
+
+                <div className="h-px bg-white/15" />
+
+                <button
+                  onClick={handleLogout}
+                  className="w-full text-left flex items-center gap-2 px-4 py-3 hover:bg-white/10 transition"
+                  role="menuitem"
+                >
+                  <LogOut size={18} className="opacity-90" />
+                  <span className="font-medium">Wyloguj</span>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </header>

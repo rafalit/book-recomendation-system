@@ -8,33 +8,35 @@ import TextField from "../components/ui/TextField";
 import PrimaryButton from "../components/ui/PrimaryButton";
 import Checkbox from "../components/ui/Checkbox";
 import { Mail, Lock } from "lucide-react";
+import { useAuth } from "../components/auth/AuthContext";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
+  const { setToken } = useAuth();
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitting) return;
+    setSubmitting(true);
     try {
       const form = new URLSearchParams();
       form.append("username", email.toLowerCase());
       form.append("password", password);
 
-      const res = await api.post("/login", form, {
+      const { data } = await api.post("/auth/login", form, {
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
       });
-      const token = res.data.access_token;
-      localStorage.setItem("token", token);
 
-      (api as any).defaults.headers.common.Authorization = `Bearer ${token}`;
-
-      const me = await api.get("/me");
-      localStorage.setItem("user", JSON.stringify(me.data));
+      setToken(data.access_token);
 
       navigate("/home", { replace: true });
     } catch (err: any) {
       alert(err?.response?.data?.detail ?? "Błąd logowania");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -44,14 +46,12 @@ export default function LoginPage() {
         title="Logowanie"
         subtitle="Wprowadź dane konta."
         footer={
-          <>
-            <div className="text-sm">
-              Nie masz konta?{" "}
-              <Link to="/register" className="text-blue-700 hover:underline">
-                Zarejestruj się
-              </Link>
-            </div>
-          </>
+          <div className="text-sm">
+            Nie masz konta?{" "}
+            <Link to="/register" className="text-blue-700 hover:underline">
+              Zarejestruj się
+            </Link>
+          </div>
         }
       >
         <form onSubmit={onSubmit} className="space-y-4">
@@ -80,7 +80,9 @@ export default function LoginPage() {
             </Link>
           </div>
 
-          <PrimaryButton type="submit">Zaloguj się</PrimaryButton>
+          <PrimaryButton type="submit" disabled={submitting}>
+            {submitting ? "Logowanie…" : "Zaloguj się"}
+          </PrimaryButton>
         </form>
       </AuthCard>
     </AuthLayout>

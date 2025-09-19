@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import axios from "axios";
+import api from "../lib/api"
 import { Link, useNavigate } from "react-router-dom";
 
 import AuthLayout from "../components/auth/AuthLayout";
@@ -47,8 +47,8 @@ export default function RegisterPage() {
 
   // 1) pobierz konfigurację do UI (jedno źródło prawdy z backendu)
   useEffect(() => {
-    axios
-      .get<Config>("http://127.0.0.1:8000/meta/config")
+    api
+      .get<Config>("/meta/config")
       .then((res) => {
         setCfg(res.data);
         if (res.data.titles?.length) setTitle(res.data.titles[0]);
@@ -99,7 +99,7 @@ export default function RegisterPage() {
   // 5) finalny submit po wpisaniu kodu (styczeń2026)
   const submit = async () => {
     try {
-      await axios.post("http://127.0.0.1:8000/register", {
+      await api.post("/auth/register", {
         role,
         email: email.toLowerCase(),
         first_name: first,

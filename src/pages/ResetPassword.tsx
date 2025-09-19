@@ -1,5 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
+import api from "../lib/api";
 import AuthLayout from "../components/auth/AuthLayout";
 import AuthCard from "../components/auth/AuthCard";
 import TextField from "../components/ui/TextField";
@@ -15,13 +15,13 @@ export default function ResetPassword() {
 
   const next1 = async (e:React.FormEvent) => {
     e.preventDefault();
-    await axios.post("http://127.0.0.1:8000/password/reset/start", { email: email.toLowerCase() });
+    await api.post("/auth/password/reset/start", { email: email.toLowerCase() });
     setStep(2);
   };
 
   const next2 = async (e:React.FormEvent) => {
     e.preventDefault();
-    await axios.post("http://127.0.0.1:8000/password/reset/verify", { email: email.toLowerCase(), code });
+    await api.post("/auth/password/reset/verify", { email: email.toLowerCase(), code });
     setStep(3);
   };
 
@@ -30,7 +30,7 @@ export default function ResetPassword() {
     if (pw1 !== pw2) return alert("Hasła się różnią.");
     if (!/\d/.test(pw1) || !/[^A-Za-z0-9]/.test(pw1) || pw1.length < 8)
       return alert("Hasło: min 8, 1 cyfra i 1 znak specjalny.");
-    await axios.post("http://127.0.0.1:8000/password/reset/confirm", {
+    await api.post("/auth/password/reset/confirm", {
       email: email.toLowerCase(), code, new_password: pw1
     });
     alert("Hasło zmienione. Zaloguj się.");

@@ -1,3 +1,4 @@
+// lib/api.ts
 import axios from "axios";
 
 const api = axios.create({
@@ -5,11 +6,10 @@ const api = axios.create({
   withCredentials: false,
 });
 
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
-  if (token) config.headers.Authorization = `Bearer ${token}`;
-  return config;
-});
+export const setApiToken = (t: string | null) => {
+  if (t) api.defaults.headers.common.Authorization = `Bearer ${t}`;
+  else delete api.defaults.headers.common.Authorization;
+};
 
 api.interceptors.response.use(
   (res) => res,
@@ -17,9 +17,8 @@ api.interceptors.response.use(
     if (err?.response?.status === 401) {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
-      if (window.location.pathname !== "/login") {
-        window.location.replace("/login");
-      }
+      // opcjonalnie: usuń też z default headers
+      delete api.defaults.headers.common.Authorization;
     }
     return Promise.reject(err);
   }
