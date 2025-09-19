@@ -1,5 +1,6 @@
+// pages/HomePage.tsx
 import { useEffect, useMemo, useState } from "react";
-import axios from "axios";
+import api from "../lib/api";
 import TopNav from "../components/layout/TopNav";
 import UniversitySidebar from "../components/home/UniversitySidebar";
 import NewsList, { NewsItem } from "../components/home/NewsList";
@@ -52,8 +53,8 @@ export default function HomePage() {
   });
 
   useEffect(() => {
-    axios
-      .get<Config>("http://127.0.0.1:8000/meta/config")
+    api
+      .get<Config>("/meta/config")
       .then((res) => setCfg(res.data))
       .catch(() => setCfg({ domain_to_uni: {}, university_faculties: {}, titles: [] }));
   }, []);
@@ -67,35 +68,37 @@ export default function HomePage() {
 
   useEffect(() => {
     if (!cfg) return;
+    const ctrl = new AbortController();
     const fetchNews = async () => {
       setLoading(true);
       try {
         if (selected === "wszystkie") {
           const uniNames = universities.slice(0, 6);
-          const res = await Promise.all(
-            uniNames.map((u) =>
-              axios.get<NewsItem[]>("http://127.0.0.1:8000/news", {
-                params: { q: u, max_results: 6 },
-              })
-            )
-          );
-          const merged = res.flatMap((r) => r.data);
+          if (!uniNames.length) { setRaw([]); return; }
+          const q = uniNames.join(",");
+          const r = await api.get<Record<string, NewsItem[]>>("/news/multi", {
+            params: { q, limit_each: 6 },
+            signal: ctrl.signal as any,
+          });
+          const merged = Object.values(r.data).flat();
           const byLink = new Map<string, NewsItem>();
           merged.forEach((n) => n.link && byLink.set(n.link, n));
           setRaw(Array.from(byLink.values()));
         } else {
-          const r = await axios.get<NewsItem[]>("http://127.0.0.1:8000/news", {
+          const r = await api.get<NewsItem[]>("/news", {
             params: { q: selected, max_results: 24 },
+            signal: ctrl.signal as any,
           });
           setRaw(r.data);
         }
-      } catch {
-        setRaw([]);
+      } catch (e: any) {
+        if (e?.name !== "CanceledError") setRaw([]);
       } finally {
         setLoading(false);
       }
     };
     fetchNews();
+    return () => ctrl.abort();
   }, [cfg, selected, universities]);
 
   const publishersAll = useMemo(() => {
@@ -144,18 +147,13 @@ export default function HomePage() {
   }, [raw, filters]);
 
   return (
-    // 100vh + brak głównego scrolla
     <div className="h-screen overflow-hidden bg-slate-100 flex flex-col">
       <TopNav />
-
-      {/* Wysokość: 100vh - 80px (TopNav ma h-20) */}
       <div
         className="mx-auto max-w-[2000px] px-2 py-4 w-full
              h-[calc(100vh-80px)] grid grid-cols-1 md:grid-cols-[400px,1fr] gap-4 overflow-hidden"
       >
-
-        {/* LEWA KARTA: pełna wysokość + wewnętrzny scroll */}
-        <div className="h-full overflow-hidden">
+        <div className="h-full overflow-hidden bg-blue-600 text-white rounded-2xl">
           <UniversitySidebar
             universities={universities}
             selected={selected}
@@ -163,7 +161,7 @@ export default function HomePage() {
           />
         </div>
 
-        {/* PRAWA KARTA: filtry (góra) + scrollowana lista (dół) */}
+
         <section className="bg-white rounded-2xl shadow-sm border border-slate-200
                           h-full flex flex-col overflow-hidden">
           <div className="p-4 border-b shrink-0">
@@ -182,4 +180,3 @@ export default function HomePage() {
     </div>
   );
 }
-

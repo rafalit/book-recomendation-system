@@ -1,3 +1,4 @@
+// components/home/NewsCard.tsx
 import { useMemo, useState } from "react";
 import { Globe } from "lucide-react";
 
@@ -8,8 +9,8 @@ export type NewsCardProps = {
   snippet?: string | null;
   date?: string | null;
   thumbnail?: string | null;
-  publisher_domain?: string | null;   // domena wydawcy z backendu
-  publisher_favicon?: string | null;  // gotowy URL favikony (jeśli backend poda)
+  publisher_domain?: string | null;
+  publisher_favicon?: string | null;
 };
 
 export function hostFrom(link: string): string | null {
@@ -38,7 +39,7 @@ function timeAgo(date?: string | null): string {
   return `${y} lat temu`;
 }
 
-// z HTML wyciągnij href pierwszego <a> – backup, gdy snippet jednak przyjdzie jako HTML
+// z HTML wyciągnij href pierwszego <a>
 function extractFirstHref(html?: string | null): string | null {
   if (!html) return null;
   const div = document.createElement("div");
@@ -81,7 +82,7 @@ function resolvePublisher(
   return { label, domain: fallbackDomain };
 }
 
-// usuń duplikat tytułu i spróbuj dać 2–3 zdania snippetu
+// snippet 2–3 zdania
 function cleanedPreview(title: string, snippet?: string | null): string {
   if (!snippet) return "";
   const div = document.createElement("div");
@@ -102,13 +103,22 @@ function cleanedPreview(title: string, snippet?: string | null): string {
   return cut.length < 40 ? "" : cut;
 }
 
-// placeholder jako data URL (zero requestów, brak 404)
-const PLACEHOLDER_DATA_URL =
+// placeholdery jako data URL (zero requestów)
+const FAVICON_PLACEHOLDER =
   "data:image/svg+xml;utf8," +
   encodeURIComponent(
     `<svg xmlns='http://www.w3.org/2000/svg' width='128' height='128'>
        <rect width='100%' height='100%' fill='#e2e8f0'/>
        <text x='50%' y='54%' text-anchor='middle' font-size='64' fill='#64748b'>📰</text>
+     </svg>`
+  );
+
+const THUMB_PLACEHOLDER =
+  "data:image/svg+xml;utf8," +
+  encodeURIComponent(
+    `<svg xmlns='http://www.w3.org/2000/svg' width='320' height='224'>
+       <rect width='100%' height='100%' fill='#f1f5f9'/>
+       <text x='50%' y='52%' text-anchor='middle' font-size='48' fill='#94a3b8'>🖼️</text>
      </svg>`
   );
 
@@ -131,15 +141,17 @@ export default function NewsCard({
     if (publisher_favicon) return publisher_favicon;
     return host
       ? `https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&url=https://${host}&size=128`
-      : PLACEHOLDER_DATA_URL;
+      : FAVICON_PLACEHOLDER;
   }, [publisher_favicon, host]);
 
   const [faviconSrc, setFaviconSrc] = useState(initialFavicon);
-
   const handleFaviconError = () => {
-    if (faviconSrc !== PLACEHOLDER_DATA_URL) {
-      setFaviconSrc(PLACEHOLDER_DATA_URL);
-    }
+    if (faviconSrc !== FAVICON_PLACEHOLDER) setFaviconSrc(FAVICON_PLACEHOLDER);
+  };
+
+  const [thumbSrc, setThumbSrc] = useState(thumbnail || "");
+  const handleThumbError = () => {
+    if (thumbSrc !== THUMB_PLACEHOLDER) setThumbSrc(THUMB_PLACEHOLDER);
   };
 
   return (
@@ -174,13 +186,14 @@ export default function NewsCard({
           {preview && <p className="mt-1 text-sm text-slate-600">{preview}</p>}
         </div>
 
-        {thumbnail && (
+        {(thumbSrc || thumbnail) && (
           <img
-            src={thumbnail}
+            src={thumbSrc || THUMB_PLACEHOLDER}
             alt=""
             className="w-40 h-28 object-cover rounded-md border border-slate-200"
             loading="lazy"
             referrerPolicy="no-referrer"
+            onError={handleThumbError}
           />
         )}
       </div>

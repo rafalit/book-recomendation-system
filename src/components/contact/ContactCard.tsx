@@ -1,13 +1,8 @@
+// src/components/contact/ContactCard.tsx
 import React from "react";
 import {
-  Copy,
-  ExternalLink,
-  MapPin,
-  Check,
-  Facebook,
-  Linkedin,
-  Youtube,
-  Twitter,
+  Copy, Check, ExternalLink, MapPin, Phone, Mail,
+  Globe, Newspaper, Rss, Facebook, Linkedin, Youtube, Twitter
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -17,12 +12,10 @@ export type ContactBlock = {
   items?: { label?: string; value: string; type?: "tel" | "email" | "url" | "text" }[];
   links?: { label: string; href: string }[];
 };
-
 export type ContactData = {
   header?: {
     title?: string;
     hours?: string;
-    emoji?: string;
     logoUrl?: string | null;
     social?: Record<string, string> | null;
   };
@@ -30,35 +23,38 @@ export type ContactData = {
   sections: ContactBlock[];
 };
 
-// --- helpers ---------------------------------------------------------------
-function hrefFor(v: string, type?: "tel" | "email" | "url" | "text") {
-  if (type === "tel") return "tel:" + v.replace(/\s/g, "");
-  if (type === "email") return "mailto:" + v;
-  if (type === "url") return v.startsWith("http") ? v : "https://" + v;
-  return undefined;
-}
-
-function emojiFor(type?: "tel" | "email" | "url" | "text") {
-  if (type === "tel") return "📞";
-  if (type === "email") return "✉️";
-  if (type === "url") return "🌐";
-  return "•";
-}
+const hrefFor = (v: string, type?: "tel" | "email" | "url" | "text") =>
+  type === "tel" ? "tel:" + v.replace(/\s/g, "")
+  : type === "email" ? "mailto:" + v
+  : type === "url" ? (v.startsWith("http") ? v : "https://" + v)
+  : undefined;
 
 function SocialIcon({ name }: { name: string }) {
   const n = name.toLowerCase();
-  if (n.includes("facebook")) return <Facebook size={18} className="text-slate-600" />;
-  if (n.includes("linkedin")) return <Linkedin size={18} className="text-slate-600" />;
-  if (n.includes("youtube")) return <Youtube size={18} className="text-slate-600" />;
-  if (n === "x" || n.includes("twitter")) return <Twitter size={18} className="text-slate-600" />;
-  return <ExternalLink size={18} className="text-slate-600" />;
+  if (n.includes("facebook")) return <Facebook size={18} />;
+  if (n.includes("linkedin")) return <Linkedin size={18} />;
+  if (n.includes("youtube")) return <Youtube size={18} />;
+  if (n === "x" || n.includes("twitter")) return <Twitter size={18} />;
+  return <ExternalLink size={18} />;
 }
 
-function cx(...classes: Array<string | false | null | undefined>) {
-  return classes.filter(Boolean).join(" ");
+function ChipLink({
+  href, icon, children, title,
+}: { href: string; icon: React.ReactNode; children: React.ReactNode; title?: string }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      title={title}
+      className="inline-flex items-center gap-1.5 rounded-full bg-white/80 hover:bg-white px-3 py-1.5 text-sm
+                 text-indigo-700 ring-1 ring-inset ring-indigo-200 transition-colors"
+    >
+      {icon} {children}
+    </a>
+  );
 }
 
-// --- UI bits ---------------------------------------------------------------
 function CopyBtn({ text, aria }: { text: string; aria?: string }) {
   const [ok, setOk] = React.useState(false);
   return (
@@ -70,258 +66,223 @@ function CopyBtn({ text, aria }: { text: string; aria?: string }) {
           await navigator.clipboard.writeText(text);
           setOk(true);
           setTimeout(() => setOk(false), 1200);
-        } catch { }
+        } catch {}
       }}
-      className="ml-1 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300"
+      className="ml-1 inline-flex items-center gap-1 rounded-full px-2 py-1 text-[12px] font-medium
+                 text-slate-600 hover:text-slate-900 hover:bg-slate-100 focus:outline-none
+                 focus-visible:ring-2 focus-visible:ring-indigo-300"
     >
-      {ok ? <Check size={16} className="text-emerald-600" /> : <Copy size={16} />}
+      {ok ? <Check size={14} className="text-emerald-600" /> : <Copy size={14} />}
       {ok ? "Skopiowano" : "Kopiuj"}
     </button>
   );
 }
 
-function StatPill({ children }: { children: React.ReactNode }) {
+function InfoRow({ type, value, label }:{
+  type?: "tel"|"email"|"url"|"text"; value: string; label?: string;
+}) {
+  const href = hrefFor(value, type);
+  const Icon =
+    type === "tel" ? Phone :
+    type === "email" ? Mail :
+    type === "url" ? Globe :
+    ExternalLink;
+
+  const content = (
+    <div className="flex items-center gap-2 min-w-0">
+      <Icon size={18} className="text-indigo-600 shrink-0" />
+      <div className="min-w-0">
+        {label && <span className="font-medium text-slate-900 mr-1">{label}:</span>}
+        <span className="text-slate-800 break-words">{value}</span>
+      </div>
+      <CopyBtn text={value} aria={`Skopiuj ${label || value}`} />
+    </div>
+  );
+
   return (
-    <span className="inline-flex items-center gap-1 rounded-full border border-indigo-200/70 bg-indigo-50/70 px-3 py-1 text-xs font-medium text-indigo-700">
-      {children}
-    </span>
+    <li className="group">
+      {href ? (
+        <a
+          href={href}
+          target={type === "url" ? "_blank" : undefined}
+          rel="noreferrer"
+          className="block rounded-xl px-2 py-2 -mx-2 transition-colors group-hover:bg-slate-50/80
+                     focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300"
+        >
+          {content}
+        </a>
+      ) : content}
+    </li>
   );
 }
 
-function Block({ block }: { block: ContactBlock }) {
+function Card({
+  title, right, children,
+}:{ title: string; right?: React.ReactNode; children: React.ReactNode }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 14 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-40px" }}
       transition={{ duration: 0.35, ease: "easeOut" }}
+      className="overflow-hidden rounded-2xl bg-white/70 backdrop-blur supports-[backdrop-filter]:bg-white/60
+                 border border-white/60 shadow-[0_8px_30px_-15px_rgba(15,23,42,0.25)]"
     >
-      {/* gradient border */}
-      <div className="p-[1px] rounded-3xl bg-gradient-to-br from-indigo-200/70 via-sky-200/50 to-fuchsia-200/70 shadow-[0_6px_20px_-8px_rgba(99,102,241,0.35)]">
-        {/* inner card */}
-        <div className="rounded-[calc(theme(borderRadius.3xl)-1px)] border border-white/60 bg-white/70 backdrop-blur supports-[backdrop-filter]:bg-white/60 hover:bg-white/75 transition-colors">
-          <div className="p-6">
-            <div className="flex items-start justify-between gap-3">
-              <h3 className="text-[21px] leading-6 font-semibold text-slate-900 tracking-tight">
-                {block.title}
-              </h3>
-              {block.subtitle && <StatPill>{block.subtitle}</StatPill>}
-            </div>
-
-            {block.items?.length ? (
-              <ul className="mt-4 space-y-2.5">
-                {block.items.map((it, i) => {
-                  const h = hrefFor(it.value, it.type);
-                  const content = (
-                    <div className="flex items-center gap-2 text-[16px] text-slate-800">
-                      <span className="select-none" aria-hidden>{emojiFor(it.type)}</span>
-                      <span className="min-w-0 truncate">
-                        {it.label && <span className="font-medium mr-1 text-slate-900">{it.label}:</span>}
-                        <span className="font-[450]">{it.value}</span>
-                      </span>
-                      <CopyBtn text={it.value} aria={`Skopiuj ${it.label || it.value}`} />
-                    </div>
-                  );
-                  return (
-                    <li key={i} className="group">
-                      {h ? (
-                        <a
-                          href={h}
-                          target={it.type === "url" ? "_blank" : undefined}
-                          rel="noreferrer"
-                          className="block rounded-xl px-2.5 py-2 -mx-2.5 transition-colors group-hover:bg-slate-50/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300"
-                        >
-                          {content}
-                        </a>
-                      ) : (
-                        content
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
-            ) : null}
-
-            {block.links?.length ? (
-              <div className="mt-4 flex flex-wrap gap-2">
-                {block.links.map((l) => (
-                  <a
-                    key={l.href}
-                    href={l.href}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-indigo-50 to-sky-50 px-3 py-1.5 text-sm text-indigo-800 ring-1 ring-inset ring-indigo-200 hover:from-indigo-100 hover:to-sky-100 transition-colors"
-                  >
-                    <ExternalLink size={16} /> {l.label}
-                  </a>
-                ))}
-              </div>
-            ) : null}
-          </div>
-        </div>
+      <div className="p-5 border-b border-slate-200/70 flex items-start justify-between gap-3">
+        {/* POWIĘKSZONE NAGŁÓWKI KAFELKÓW */}
+        <h3 className="text-[20px] md:text-[21px] font-semibold tracking-tight text-slate-900">
+          {title}
+        </h3>
+        {right}
       </div>
+      <div className="p-5">{children}</div>
     </motion.div>
   );
 }
 
-
-// --- main component --------------------------------------------------------
+/* =================== MAIN =================== */
 export default function ContactCard({ data }: { data: ContactData }) {
-  const header = data.header ?? { title: "Kontakt", emoji: "📞" };
+  const header = data.header ?? { title: "Kontakt" };
 
-  const generalIdx = data.sections.findIndex((s) =>
-    s.title.toLowerCase().includes("ogólny")
-  );
+  // sekcja „Kontakt ogólny” jeśli istnieje
+  const generalIdx = data.sections.findIndex((s) => s.title.toLowerCase().includes("ogóln"));
   const general = generalIdx >= 0 ? data.sections[generalIdx] : undefined;
-  const rest =
-    generalIdx >= 0 ? data.sections.filter((_, i) => i !== generalIdx) : data.sections;
+  const rest   = generalIdx >= 0 ? data.sections.filter((_, i) => i !== generalIdx) : data.sections;
 
   return (
-    <section className="relative">
-      {/* dreamy background */}
-      <div aria-hidden className="pointer-events-none absolute -inset-8 -z-30">
+    // KONIEC POZIOMEGO SCROLLA: overflow-hidden + tło bez -inset
+    <section className="relative overflow-hidden">
+      <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
         <div className="absolute inset-0 bg-[radial-gradient(900px_300px_at_0%_-10%,theme(colors.indigo.100/60),transparent),radial-gradient(700px_260px_at_100%_-20%,theme(colors.sky.100/55),transparent),radial-gradient(600px_200px_at_50%_110%,theme(colors.fuchsia.100/45),transparent)] blur-xl" />
       </div>
 
-      {/* subtle watermark */}
-      {header.logoUrl && (
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 -z-20 opacity-[0.03] flex items-center justify-center"
-        >
-          <img
-            src={header.logoUrl}
-            alt=""
-            className="w-[72%] max-w-[720px] object-contain blur-[0.6px]"
-          />
-        </div>
-      )}
-
-      {/* OUTER CARD */}
-      <div className="overflow-hidden rounded-[28px] border border-white/60 bg-white/70 backdrop-blur supports-[backdrop-filter]:bg-white/55 shadow-[0_12px_40px_-16px_rgba(15,23,42,0.25)] relative">
-        {/* HEADER */}
-        {/* HEADER */}
-        <div className="relative border-b border-slate-200/70 overflow-hidden">
-          <div
-            className="absolute inset-0 bg-[radial-gradient(1200px_220px_at_10%_-80px,theme(colors.indigo.50),transparent),radial-gradient(800px_200px_at_90%_-60px,theme(colors.sky.50),transparent)]"
-            aria-hidden
-          />
-
-          {/* watermark lewy */}
-          {header.logoUrl && (
-            <div
-              aria-hidden
-              className="pointer-events-none select-none absolute inset-y-0 left-0 w-[220px] md:w-[300px] opacity-[0.80] z-0 hidden sm:block"
-            >
-              <img
-                src={header.logoUrl}
-                alt=""
-                className="h-full w-full object-contain object-left pl-6"
-              />
-            </div>
-          )}
-
-          {/* watermark prawy */}
-          {header.logoUrl && (
-            <div
-              aria-hidden
-              className="pointer-events-none select-none absolute inset-y-0 right-0 w-[220px] md:w-[300px] opacity-[0.80] z-0 hidden sm:block"
-            >
-              <img
-                src={header.logoUrl}
-                alt=""
-                className="h-full w-full object-contain object-right pr-6"
-              />
-            </div>
-          )}
-
-          {/* treść nagłówka – podniesiona nad watermark + poduszki po bokach */}
-          <div className="relative z-10 p-6 pl-24 pr-24 md:pl-40 md:pr-40">
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div className="flex items-center gap-4 min-w-0">
-                <div className="min-w-0">
-                  <div className="truncate text-[24px] leading-7 font-extrabold tracking-tight text-slate-900">
-                    {header.title}
-                  </div>
-                  {header.hours && (
-                    <div className="text-[15px] text-slate-600">
-                      {header.hours.replace("pn-pt", "poniedziałek – piątek")}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {header.social && (
-                <div className="relative z-10 flex items-center gap-2.5">
-                  {Object.entries(header.social).map(([name, href]) => (
-                    <a
-                      key={name}
-                      href={href}
-                      target="_blank"
-                      rel="noreferrer"
-                      title={name}
-                      className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/90 ring-1 ring-slate-200 text-slate-600 hover:bg-white hover:text-slate-900 transition-colors"
-                    >
-                      <SocialIcon name={name} />
-                    </a>
-                  ))}
-                </div>
+      {/* HERO */}
+      <div className="overflow-hidden rounded-[28px] border border-white/60 bg-white/70 backdrop-blur supports-[backdrop-filter]:bg-white/55
+                      shadow-[0_12px_40px_-16px_rgba(15,23,42,0.25)] mb-6">
+        <div className="relative p-6">
+          <div className="flex flex-wrap items-center justify-between gap-6">
+            {/* lewa: DUŻE LOGO + tytuł */}
+            <div className="flex items-center gap-4 min-w-0">
+              {header.logoUrl && (
+                <img
+                  src={header.logoUrl}
+                  alt=""
+                  className="h-16 w-16 md:h-20 md:w-20 rounded-xl object-contain bg-white/60 p-1 ring-1 ring-slate-200 shrink-0"
+                />
               )}
-            </div>
-          </div>
-        </div>
-
-        {/* ============= CONTENT (układ jak wcześniej) ============= */}
-        <div className="p-6">
-          {/* rząd 1: adres + kontakt ogólny */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {data.address && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-40px" }}
-                transition={{ duration: 0.35 }}
-                className="p-[1px] rounded-3xl bg-gradient-to-br from-indigo-200/70 via-sky-200/50 to-fuchsia-200/70"
-              >
-                <div className="rounded-[calc(theme(borderRadius.3xl)-1px)] border border-white/60 bg-white/75 backdrop-blur p-5 shadow-sm">
-                  <div className="flex items-center gap-2">
-                    <MapPin size={18} className="text-indigo-600" />
-                    <h3 className="text-[20px] font-semibold text-slate-900">Dane adresowe</h3>
-                  </div>
-                  <div className="mt-2 text-[16px] text-slate-700 leading-relaxed">
-                    {data.address.lines.map((l, i) => (
-                      <div key={i}>{l}</div>
-                    ))}
-                  </div>
-                  {data.address.mapUrl && (
-                    <a
-                      href={data.address.mapUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="mt-3 inline-flex items-center gap-1.5 text-[15px] font-medium text-indigo-700 hover:text-indigo-900 underline underline-offset-2"
-                    >
-                      <ExternalLink size={16} /> Zobacz na mapie
-                    </a>
-                  )}
+              <div className="min-w-0">
+                {/* POWIĘKSZONY TYTUŁ */}
+                <div className="truncate text-[24px] md:text-[26px] font-extrabold tracking-tight text-slate-900">
+                  {header.title || "Kontakt"}
                 </div>
-              </motion.div>
-            )}
-
-            {general && <Block block={general} />}
-          </div>
-
-          {/* rząd 2: pozostałe sekcje w 2 kolumnach */}
-          {!!rest.length && (
-            <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-              {rest.map((s) => (
-                <Block key={s.title} block={s} />
-              ))}
+                {header.hours && (
+                  <div className="text-[14px] text-slate-600">
+                    {header.hours.replace("pn–pt", "poniedziałek – piątek").replace("pn-pt", "poniedziałek – piątek")}
+                  </div>
+                )}
+              </div>
             </div>
-          )}
+
+            {/* prawa: social */}
+            {header.social && (
+              <div className="flex items-center gap-2">
+                {Object.entries(header.social).map(([name, href]) => (
+                  <a
+                    key={name}
+                    href={href}
+                    target="_blank"
+                    rel="noreferrer"
+                    title={name}
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/90
+                               ring-1 ring-slate-200 text-slate-600 hover:bg-white hover:text-slate-900 transition-colors"
+                  >
+                    <SocialIcon name={name} />
+                  </a>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
-        {/* ============= /CONTENT ============= */}
+      </div>
+
+      {/* GRID sekcji */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+
+        {/* Adres */}
+        {data.address && (
+          <Card
+            title="Dane adresowe"
+            right={
+              data.address.mapUrl ? (
+                <ChipLink href={data.address.mapUrl} icon={<MapPin size={16} />} title="Pokaż na mapie">
+                  Mapa
+                </ChipLink>
+              ) : null
+            }
+          >
+            <div className="text-[16px] text-slate-700 leading-relaxed min-w-0 break-words">
+              {data.address.lines.map((l, i) => <div key={i}>{l}</div>)}
+            </div>
+          </Card>
+        )}
+
+        {/* Kontakt ogólny */}
+        {general && (
+          <Card
+            title="Kontakt ogólny"
+            right={
+              <div className="flex flex-wrap gap-2">
+                {/* jeżeli w general.links dodasz WWW/BIP/RSS, chipy pojawią się same */}
+                {general.links?.map(l => (
+                  <ChipLink key={l.href}
+                            href={l.href}
+                            icon={/bip/i.test(l.label) ? <Newspaper size={16}/> : /rss/i.test(l.label) ? <Rss size={16}/> : <Globe size={16}/>}>
+                    {l.label}
+                  </ChipLink>
+                ))}
+              </div>
+            }
+          >
+            <ul className="space-y-2">
+              {general.items?.map((it, i) => (
+                <InfoRow key={i} type={it.type} value={it.value} label={it.label} />
+              ))}
+            </ul>
+          </Card>
+        )}
+
+        {/* Pozostałe sekcje */}
+        {rest.map((s) => (
+          <Card
+            key={s.title}
+            title={s.title}
+            right={s.subtitle ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 text-indigo-700 text-xs
+                               px-2.5 py-1 ring-1 ring-inset ring-indigo-200">
+                {s.subtitle}
+              </span>
+            ) : undefined}
+          >
+            {!!s.items?.length && (
+              <ul className="space-y-2">
+                {s.items.map((it, i) => (
+                  <InfoRow key={i} type={it.type} value={it.value} label={it.label} />
+                ))}
+              </ul>
+            )}
+            {!!s.links?.length && (
+              <div className="mt-4 flex flex-wrap gap-2">
+                {s.links.map((l) => (
+                  <ChipLink key={l.href} href={l.href} icon={<ExternalLink size={16}/>}>
+                    {l.label}
+                  </ChipLink>
+                ))}
+              </div>
+            )}
+          </Card>
+        ))}
+
       </div>
     </section>
   );
 }
-

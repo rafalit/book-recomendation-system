@@ -1,3 +1,4 @@
+// src/components/home/UniversitySidebar.tsx
 type Props = {
   universities: string[];
   selected: string;
@@ -5,22 +6,35 @@ type Props = {
 };
 
 export default function UniversitySidebar({ universities, selected, onSelect }: Props) {
-  // wspólne klasy active
-  const ACTIVE =
-    "bg-indigo-600 text-white border-indigo-600 shadow-sm hover:bg-indigo-600";
+  // Wrapper: ten sam vibe co topbar – gradient + delikatna ramka i cień
+  const WRAPPER =
+    "bg-gradient-to-b from-indigo-700 to-blue-600 text-white " +
+    "h-full flex flex-col overflow-hidden rounded-2xl " +
+    "shadow-[0_10px_30px_-10px_rgba(15,23,42,0.45)] border border-white/15";
 
-  // wspólne klasy inactive
-  const INACTIVE_PRIMARY =
-    "bg-indigo-50 text-indigo-700 border-indigo-100 hover:bg-indigo-100";
-  const INACTIVE_ITEM =
-    "bg-white text-slate-800 border-slate-200 hover:bg-slate-50";
+  // PILL styles (jak TopNav)
+  const PILL_BASE =
+    "w-full text-left rounded-full border transition-colors " +
+    "px-5 py-3 text-[15px] font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50";
+
+  const PILL_ACTIVE = "bg-white text-indigo-700 border-white shadow-sm";
+  const PILL_INACTIVE =
+    "bg-white/10 text-white border-white/20 hover:bg-white/20";
+
+  const SUBTXT = "text-xs opacity-90 -mt-1 font-normal";
 
   return (
-    <section className="bg-white rounded-2xl shadow-sm border border-slate-200 h-full flex flex-col overflow-hidden">
-      <div className="p-4 flex items-center gap-2 border-b shrink-0">
-        <span className="text-indigo-700">🎓</span>
-        <h2 className="text-slate-800 font-semibold">Krakowskie Uczelnie</h2>
-        <span className="ml-auto text-xs bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full">
+    <section className={WRAPPER}>
+      {/* Header */}
+      <div className="p-4 flex items-center gap-2 border-b border-white/15 shrink-0">
+        <div
+          aria-hidden
+          className="h-8 w-8 rounded-lg bg-yellow-400 text-indigo-900 text-lg grid place-items-center shadow"
+        >
+          🎓
+        </div>
+        <h2 className="font-semibold">Krakowskie Uczelnie</h2>
+        <span className="ml-auto text-xs bg-white/20 text-white px-2 py-0.5 rounded-full">
           {universities.length}
         </span>
       </div>
@@ -29,25 +43,24 @@ export default function UniversitySidebar({ universities, selected, onSelect }: 
       <div className="p-3 shrink-0">
         <button
           onClick={() => onSelect("wszystkie")}
-          className={`w-full text-left px-4 py-3 rounded-xl border transition
-            ${selected === "wszystkie" ? ACTIVE : INACTIVE_PRIMARY}`}
+          className={`${PILL_BASE} ${selected === "wszystkie" ? PILL_ACTIVE : PILL_INACTIVE
+            }`}
           aria-selected={selected === "wszystkie"}
         >
-          <div className="text-sm font-semibold">Wszystkie uczelnie</div>
-          <div className="text-xs opacity-90 -mt-0.5">Pokaż wszystkie aktualności</div>
+          <div className="leading-5">Wszystkie uczelnie</div>
+          <div className={SUBTXT}>Pokaż wszystkie aktualności</div>
         </button>
       </div>
 
-      {/* Lista uczelni */}
-      <div className="flex-1 overflow-y-auto px-3 pb-3 space-y-2">
+      {/* Lista uczelni – każdy item jak „pill”, jedna szerokość */}
+      <div className="flex-1 overflow-y-auto px-3 pb-3 pr-2 space-y-2 university-scrollbar">
         {universities.map((u) => {
           const active = selected === u;
           return (
             <button
               key={u}
               onClick={() => onSelect(u)}
-              className={`w-full text-left px-4 py-2.5 rounded-xl border transition
-                ${active ? ACTIVE : INACTIVE_ITEM}`}
+              className={`${PILL_BASE} ${active ? PILL_ACTIVE : PILL_INACTIVE} whitespace-normal break-words`}
               aria-selected={active}
             >
               {u}

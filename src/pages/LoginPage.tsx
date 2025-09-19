@@ -1,6 +1,7 @@
+// pages/LoginPage.tsx
 import { useState } from "react";
-import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
+import api from "../lib/api";
 import AuthLayout from "../components/auth/AuthLayout";
 import AuthCard from "../components/auth/AuthCard";
 import TextField from "../components/ui/TextField";
@@ -20,14 +21,15 @@ export default function LoginPage() {
       form.append("username", email.toLowerCase());
       form.append("password", password);
 
-      const res = await axios.post("http://127.0.0.1:8000/login", form, {
+      const res = await api.post("/login", form, {
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
       });
       const token = res.data.access_token;
       localStorage.setItem("token", token);
-      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
-      const me = await axios.get("http://127.0.0.1:8000/me");
+      (api as any).defaults.headers.common.Authorization = `Bearer ${token}`;
+
+      const me = await api.get("/me");
       localStorage.setItem("user", JSON.stringify(me.data));
 
       navigate("/home", { replace: true });

@@ -1,5 +1,6 @@
+// pages/ContactPage.tsx
 import { useEffect, useMemo, useState } from "react";
-import axios from "axios";
+import api from "../lib/api";
 import TopNav from "../components/layout/TopNav";
 import UniversitySidebar from "../components/home/UniversitySidebar";
 import ContactCard, { ContactData, ContactBlock } from "../components/contact/ContactCard";
@@ -20,8 +21,8 @@ function mapToCard(uniName: string, contacts: any): ContactData {
     title: `Kontakt – ${uniName}`,
     hours: contacts.hours || undefined,
     emoji: "📞",
-    logoUrl: contacts.logo || null,            
-    social: contacts.social || null,          
+    logoUrl: contacts.logo || null,
+    social: contacts.social || null,
   };
 
   const addressLines: string[] = [];
@@ -31,7 +32,6 @@ function mapToCard(uniName: string, contacts: any): ContactData {
 
   const sections: ContactBlock[] = [];
 
-  // Kontakt ogólny
   sections.push({
     title: "Kontakt ogólny",
     items: [
@@ -76,7 +76,6 @@ function mapToCard(uniName: string, contacts: any): ContactData {
   }
 
   if (Array.isArray(contacts.faculties_offices) && contacts.faculties_offices.length) {
-    // grupujemy każdy dziekanat w osobny kafelek (lub jeden zbiorczy – jak wolisz)
     contacts.faculties_offices.forEach((o: any) => {
       sections.push({
         title: `Dziekanat – ${o.faculty}`,
@@ -101,11 +100,10 @@ export default function ContactPage() {
   const [contact, setContact] = useState<ContactData | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // uczelnie z configu
   useEffect(() => {
-    axios.get<Config>("http://127.0.0.1:8000/meta/config")
+    api.get<Config>("/meta/config")
       .then(r => setCfg(r.data))
-      .catch(() => setCfg({ university_faculties: {} }));
+      .catch(() => setCfg({ university_faculties: {} } as any));
   }, []);
 
   const universities = useMemo(() =>
@@ -113,11 +111,10 @@ export default function ContactPage() {
     [cfg]
   );
 
-  // pobierz kontakt dla wybranej uczelni
   useEffect(() => {
     if (selected === "wszystkie") { setContact(null); return; }
     setLoading(true);
-    axios.get(`http://127.0.0.1:8000/contact/${encodeURIComponent(selected)}`)
+    api.get(`/contact/${encodeURIComponent(selected)}`)
       .then(r => setContact(mapToCard(selected, r.data)))
       .catch(() => setContact(null))
       .finally(() => setLoading(false));

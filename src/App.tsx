@@ -3,26 +3,27 @@ import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import ResetPassword from "./pages/ResetPassword";
 import HomePage from "./pages/HomePage";
-import ContactPage from "./pages/ContactPage";  
+import ContactPage from "./pages/ContactPage";
+import EventsPage from "./pages/EventsPage";
 import ProtectedRoute from "./components/router/ProtectedRoute";
 import { AuthProvider } from "./components/auth/AuthContext";
+import "./App.css";
 
 function App() {
-  const hasToken = !!localStorage.getItem("token");
-
   return (
     <AuthProvider>
       <Router>
         <Routes>
-          {/* domyślnie przekieruj w zależności od posiadania tokena */}
-          <Route path="/" element={<Navigate to={hasToken ? "/home" : "/login"} replace />} />
+          {/* ZAWSZE przekieruj na /home; autoryzacja w ProtectedRoute */}
+          <Route path="/" element={<Navigate to="/home" replace />} />
 
+          {/* Publiczne trasy */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/contact" element={<ContactPage />} />
 
-          {/* /home tylko po zalogowaniu */}
+          {/* Chronione trasy */}
           <Route
             path="/home"
             element={
@@ -31,6 +32,17 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/events"
+            element={
+              <ProtectedRoute>
+                <EventsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* fallback */}
+          <Route path="*" element={<Navigate to="/home" replace />} />
         </Routes>
       </Router>
     </AuthProvider>
