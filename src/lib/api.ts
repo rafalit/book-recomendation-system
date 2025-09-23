@@ -15,10 +15,13 @@ api.interceptors.response.use(
   (res) => res,
   (err) => {
     if (err?.response?.status === 401) {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      // opcjonalnie: usuń też z default headers
-      delete api.defaults.headers.common.Authorization;
+      const url = err.config?.url || "";
+      if (url.includes("/auth/")) {
+        // tylko jeśli 401 z /auth/... to kasujemy token
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        delete api.defaults.headers.common.Authorization;
+      }
     }
     return Promise.reject(err);
   }

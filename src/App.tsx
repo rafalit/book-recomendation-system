@@ -5,8 +5,12 @@ import ResetPassword from "./pages/ResetPassword";
 import HomePage from "./pages/HomePage";
 import ContactPage from "./pages/ContactPage";
 import EventsPage from "./pages/EventsPage";
+import ForumPage from "./pages/ForumPage";
 import ProtectedRoute from "./components/router/ProtectedRoute";
 import { AuthProvider } from "./components/auth/AuthContext";
+import ForumList from "./components/forum/ForumList";
+import ForumDetail from "./components/forum/ForumDetail";
+import ForumCreate from "./components/forum/ForumCreate";
 import "./App.css";
 
 function App() {
@@ -37,6 +41,15 @@ function App() {
             element={
               <ProtectedRoute>
                 <EventsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/forum"
+            element={
+              <ProtectedRoute>
+                <ForumPage />
               </ProtectedRoute>
             }
           />

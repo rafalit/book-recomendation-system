@@ -3,6 +3,8 @@ import { useEffect, useRef, useState } from "react";
 import { Bell, ChevronDown, LogOut, User } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
+import useNotifications from "../../hooks/useNotifications";
+import NotificationsDropdown from "../notifications/NotificationsDropdown";
 
 const links = [
   { to: "/home", label: "Aktualności" },
@@ -34,6 +36,7 @@ export default function TopNav() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const { user, setToken } = useAuth();
+  const { items, markRead, remove } = useNotifications();
 
   // dropdown
   const [open, setOpen] = useState(false);
@@ -49,10 +52,9 @@ export default function TopNav() {
   }, []);
 
   const handleLogout = () => {
-    // wyczyść auth
     setToken(null);
     localStorage.removeItem("token");
-    localStorage.removeItem("user"); // jeśli gdzieś trzymasz
+    localStorage.removeItem("user"); 
     navigate("/login");
   };
 
@@ -87,16 +89,11 @@ export default function TopNav() {
         </div>
 
         <div className="flex items-center gap-3">
-          <Link
-            to="/notifications"
-            className="relative h-12 w-12 inline-flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20"
-            title="Powiadomienia"
-          >
-            <Bell size={27} />
-            <span className="absolute -top-1 -right-1 h-5 min-w-[20px] px-1 text-xs rounded-full bg-amber-400 text-indigo-900 font-bold grid place-items-center">
-              3
-            </span>
-          </Link>
+          <NotificationsDropdown
+            items={items}
+            onRead={markRead}
+            onDelete={remove}
+          />
 
           {/* USER DROPDOWN */}
           <div className="relative" ref={menuRef}>
