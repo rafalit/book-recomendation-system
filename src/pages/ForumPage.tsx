@@ -17,6 +17,7 @@ import {
   ChevronUp,
 } from "lucide-react";
 import { useAuth } from "../components/auth/AuthContext";
+import { P } from "framer-motion/dist/types.d-Cjd591yU";
 
 type Config = { university_faculties: Record<string, string[]> };
 
@@ -41,6 +42,8 @@ type Post = {
 };
 
 const TOPICS = ["AI", "Energetyka", "Dydaktyka", "Stypendia", "Ogłoszenia"];
+
+const PAGE_SIZE = 5;
 
 const REACTIONS = [
   { key: "like", label: "Like 👍" },
@@ -95,7 +98,7 @@ export default function ForumPage() {
     const load = async () => {
       setLoading(true);
       try {
-        const params: any = { q, topic, page };
+        const params: any = { q, topic, page, limit: PAGE_SIZE };
         if (selectedUni !== "wszystkie") params.uni = selectedUni;
         const r = await api.get<Post[]>("/forum", { params });
         setPosts(r.data || []);
@@ -339,20 +342,32 @@ export default function ForumPage() {
           </div>
 
           <div className="p-3 border-t shrink-0 flex items-center justify-center gap-2">
-            <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              className="px-3 py-1.5 rounded bg-white shadow hover:bg-gray-50"
-            >
-              Poprzednia
-            </button>
-            <div className="text-sm text-gray-600">Strona {page}</div>
-            <button
-              onClick={() => setPage((p) => p + 1)}
-              className="px-3 py-1.5 rounded bg-white shadow hover:bg-gray-50"
-            >
-              Następna
-            </button>
-          </div>
+          <button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page === 1}
+            className={`px-3 py-1.5 rounded shadow ${
+              page === 1
+                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                : "bg-white hover:bg-gray-50"
+            }`}
+          >
+            Poprzednia
+          </button>
+
+          <div className="text-sm text-gray-600">Strona {page}</div>
+
+          <button
+            onClick={() => setPage((p) => p + 1)}
+            disabled={posts.length < PAGE_SIZE}
+            className={`px-3 py-1.5 rounded shadow ${
+              posts.length < PAGE_SIZE
+                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                : "bg-white hover:bg-gray-50"
+            }`}
+          >
+            Następna
+          </button>
+        </div>
         </section>
       </div>
     </div>
@@ -433,13 +448,15 @@ function PostCard({
                 {p.author.university}
               </span>
             )}
+            <span className="text-[11px] px-2 py-0.5 rounded-full border bg-green-50 text-green-700 border-green-300">
+              {p.topic}
+            </span>
             <span className="text-xs text-slate-500">
               {new Date(p.created_at).toLocaleString()}
             </span>
           </div>
 
           <div className="mt-1 text-lg font-semibold">{p.title}</div>
-          <div className="text-indigo-600 font-medium">#{p.topic}</div>
         </div>
 
         <div className="flex items-center gap-2">
