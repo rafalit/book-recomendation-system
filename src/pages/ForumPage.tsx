@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../components/auth/AuthContext";
 import { P } from "framer-motion/dist/types.d-Cjd591yU";
+import { formatDateOnly } from "../lib/formatDate";
 
 type Config = { university_faculties: Record<string, string[]> };
 
@@ -452,7 +453,7 @@ function PostCard({
               {p.topic}
             </span>
             <span className="text-xs text-slate-500">
-              {new Date(p.created_at).toLocaleString()}
+              {formatDateOnly(p.created_at)}
             </span>
           </div>
 
@@ -677,7 +678,7 @@ function ReplyNode({
                   : "Pracownik naukowy")}
             </span>
             <span className="text-xs text-slate-500">
-              {new Date(n.created_at).toLocaleString()}
+              {formatDateOnly(n.created_at)}
             </span>
           </div>
           <div className="flex items-center gap-1">

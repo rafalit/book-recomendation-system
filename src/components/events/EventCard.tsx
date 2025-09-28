@@ -21,17 +21,35 @@ export type EventItem = {
 
 function fmtDateRange(start: string, end?: string | null, allDay?: boolean) {
   const s = new Date(start);
-  const e = end ? new Date(end) : null;
-  const d = s.toLocaleDateString("pl-PL", { day: "2-digit", month: "short", weekday: "short" });
+  let e = end ? new Date(end) : null;
+
+  // jeśli godzina = 00:00, traktujemy jak brak godziny → ustawiamy domyślnie 16:00–20:00
+  if (!allDay && s.getHours() === 0 && s.getMinutes() === 0) {
+    s.setHours(16, 0, 0, 0);
+    e = new Date(s);
+    e.setHours(20, 0, 0, 0);
+  }
+
+  const d = s.toLocaleDateString("pl-PL", {
+    day: "2-digit",
+    month: "short",
+    weekday: "short",
+  });
+
+  if (allDay) {
+    return `${d} • cały dzień`;
+  }
+
   const th = s.toLocaleTimeString("pl-PL", { hour: "2-digit", minute: "2-digit" });
   const eh = e ? e.toLocaleTimeString("pl-PL", { hour: "2-digit", minute: "2-digit" }) : "";
-  return allDay ? `${d} • cały dzień` : `${d} • ${th}${eh ? "–"+eh : ""}`;
+
+  return `${d} • ${th}${eh ? "–" + eh : ""}`;
 }
 
 export default function EventCard({ ev }: { ev: EventItem }) {
-  const [pending, setPending] = useState<"going"|"interested"|null>(null);
+  const [pending, setPending] = useState<"going" | "interested" | null>(null);
 
-  const rsvp = async (state: "going"|"interested") => {
+  const rsvp = async (state: "going" | "interested") => {
     try {
       setPending(state);
       await api.post(`/events/${ev.id}/rsvp`, { state });
@@ -47,8 +65,14 @@ export default function EventCard({ ev }: { ev: EventItem }) {
           <div className="flex items-center gap-2 text-xs text-slate-600">
             <Calendar size={14} />
             <span>{fmtDateRange(ev.start_at, ev.end_at || null, ev.all_day)}</span>
-            {ev.university_name && <span className="text-slate-400">• {ev.university_name}</span>}
-            {ev.category && <span className="ml-2 rounded-full bg-indigo-50 text-indigo-700 px-2 py-0.5 border border-indigo-100">{ev.category}</span>}
+            {ev.university_name && (
+              <span className="text-slate-400">• {ev.university_name}</span>
+            )}
+            {ev.category && (
+              <span className="ml-2 rounded-full bg-indigo-50 text-indigo-700 px-2 py-0.5 border border-indigo-100">
+                {ev.category}
+              </span>
+            )}
           </div>
           <h3 className="mt-1 text-[18px] font-semibold text-slate-900">{ev.title}</h3>
           <div className="mt-1 flex items-center gap-3 text-sm text-slate-600">

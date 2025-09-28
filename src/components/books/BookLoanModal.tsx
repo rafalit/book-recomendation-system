@@ -4,7 +4,7 @@ import { X, Calendar } from "lucide-react";
 type Props = {
   open: boolean;
   onClose: () => void;
-  onSubmit: (loan: { until: string }) => void;
+  onSubmit: (loan: { due_date: string }) => void; 
   bookTitle: string;
   available: number;
 };
@@ -19,7 +19,12 @@ export default function BookLoanModal({ open, onClose, onSubmit, bookTitle, avai
       alert("Podaj datę zwrotu.");
       return;
     }
-    onSubmit({ until });
+
+    // zawsze normalizuj
+    const normalized = new Date(until).toISOString().split("T")[0];
+    console.log("📤 Normalizuję i wysyłam due_date:", normalized);
+
+    onSubmit({ due_date: normalized });   // 👈 wysyłaj tylko YYYY-MM-DD
     setUntil("");
     onClose();
   };

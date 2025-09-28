@@ -1,45 +1,53 @@
+// src/hooks/useNotifications.ts
 import { useEffect, useState } from "react";
 import api from "../lib/api";
-
-export type Notification = {
-  id: number;
-  text: string;
-  read: boolean;
-};
+import { Notification } from "../components/notifications/NotificationsDropdown";
 
 export default function useNotifications() {
   const [items, setItems] = useState<Notification[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const { data } = await api.get("/notifications");
-        setItems(data);
-      } catch (e) {
-        console.error("Błąd ładowania powiadomień", e);
-      }
-    })();
-  }, []);
+  // ✅ pobierz powiadomienia
+  const fetchAll = async () => {
+    setLoading(true);
+    try {
+      const res = await api.get<Notification[]>("/notifications");
+      setItems(res.data);
+    } catch (err) {
+      console.error("❌ Błąd pobierania powiadomień:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  // ✅ oznacz jako przeczytane
   const markRead = async (id: number) => {
     try {
       await api.post(`/notifications/${id}/read`);
       setItems((prev) =>
         prev.map((n) => (n.id === id ? { ...n, read: true } : n))
       );
-    } catch (e) {
-      console.error("Błąd przy oznaczaniu powiadomienia", e);
+    } catch (err) {
+      console.error("❌ Błąd oznaczania powiadomienia:", err);
     }
   };
 
+  // ✅ usuń powiadomienie
   const remove = async (id: number) => {
     try {
       await api.delete(`/notifications/${id}`);
       setItems((prev) => prev.filter((n) => n.id !== id));
-    } catch (e) {
-      console.error("Błąd przy usuwaniu powiadomienia", e);
+    } catch (err) {
+      console.error("❌ Błąd usuwania powiadomienia:", err);
     }
   };
 
-  return { items, markRead, remove };
+  useEffect(() => {
+    fetchAll();
+    // Opcjonalnie auto-refresh co 60s
+    const timer = setInterval(fetchAll, 60_000);
+    return () => clearInterval(timer);
+  }, []);
+
+  return { items, loading, fetchAll, markRead, remove };
 }

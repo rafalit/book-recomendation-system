@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import ReactionBar from "./ReactionBar";
 import { ForumPost } from "../../lib/forumApi";
+import { formatDateOnly } from "../../lib/formatDate";
 
 function RoleBadge({ role }: { role: string }) {
   const isStudent = role === "student";
@@ -29,8 +30,7 @@ export default function PostCard({
           <div className="text-slate-600 mt-0.5">{post.summary}</div>
           <div className="mt-1 text-xs text-slate-500">
             {post.author.first_name} {post.author.last_name}
-            <RoleBadge role={post.author.role} /> • {post.topic} •{" "}
-            {new Date(post.created_at).toLocaleString()}
+            <RoleBadge role={post.author.role} /> • {post.topic} • {formatDateOnly(post.created_at)}
           </div>
         </div>
         <Link to={`/forum/${post.id}`} className="text-sm text-indigo-700 hover:underline">

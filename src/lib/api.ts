@@ -14,6 +14,12 @@ export const setApiToken = (t: string | null) => {
   else delete api.defaults.headers.common.Authorization;
 };
 
+// ⬇️ dodaj od razu po starcie: ustaw token z localStorage
+const savedToken = localStorage.getItem("token");
+if (savedToken) {
+  setApiToken(savedToken);
+}
+
 api.interceptors.response.use(
   (res) => res,
   (err) => {

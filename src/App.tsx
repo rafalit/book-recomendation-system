@@ -19,7 +19,7 @@ function App() {
       <Router>
         <Routes>
           {/* ZAWSZE przekieruj na /home; autoryzacja w ProtectedRoute */}
-          <Route path="/" element={<Navigate to="/home" replace />} />
+          <Route path="/" element={<Navigate to="/login" replace />} />
 
           {/* Publiczne trasy */}
           <Route path="/login" element={<LoginPage />} />

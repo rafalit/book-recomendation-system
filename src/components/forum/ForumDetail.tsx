@@ -6,6 +6,7 @@ import { addReply, fetchPost } from "../../lib/forumApi";
 import ReactionBar from "../../components/forum/ReactionBar";
 import ReportDialog from "../../components/forum/ReportDialog";
 import { useAuth } from "../../components/auth/AuthContext";
+import { formatDateOnly } from "../../lib/formatDate";
 
 type Author = {
   id: number;
@@ -86,7 +87,7 @@ function Reply({
         <LineBadge className={node.author.role === "student" ? "bg-amber-50 text-amber-700 border-amber-300" : "bg-rose-50 text-rose-700 border-rose-300"}>
           {node.author.academic_title || (node.author.role === "student" ? "Student" : "Pracownik naukowy")}
         </LineBadge>
-        <span className="ml-2">{new Date(node.created_at).toLocaleString()}</span>
+        <span className="ml-2">• {formatDateOnly(node.created_at)}</span>
       </div>
       <div className="mt-1 whitespace-pre-wrap break-words">{node.body}</div>
 
@@ -193,7 +194,7 @@ export default function ForumDetail() {
 
         <div className="mt-1 text-xs text-slate-500">
           <span>#{post.topic}</span>
-          <span className="ml-2">• {new Date(post.created_at).toLocaleString()}</span>
+          <span className="ml-2">• {formatDateOnly(post.created_at)}</span>
         </div>
 
         <div className="prose max-w-none mt-4 whitespace-pre-wrap break-words">{post.body}</div>

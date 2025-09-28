@@ -54,7 +54,7 @@ export default function TopNav() {
   const handleLogout = () => {
     setToken(null);
     localStorage.removeItem("token");
-    localStorage.removeItem("user"); 
+    localStorage.removeItem("user");
     navigate("/login");
   };
 
@@ -89,11 +89,14 @@ export default function TopNav() {
         </div>
 
         <div className="flex items-center gap-3">
-          <NotificationsDropdown
-            items={items}
-            onRead={markRead}
-            onDelete={remove}
-          />
+          {/* DZWONEK */}
+          <div className="h-12 w-12 rounded-full bg-yellow-400 text-indigo-900 grid place-items-center shadow">
+            <NotificationsDropdown
+              items={items}
+              onRead={markRead}
+              onDelete={remove}
+            />
+          </div>
 
           {/* USER DROPDOWN */}
           <div className="relative" ref={menuRef}>
@@ -104,7 +107,9 @@ export default function TopNav() {
               aria-haspopup="menu"
               aria-expanded={open}
             >
-              <div className="h-8 w-8 rounded-full bg-white/20 mr-3 grid place-items-center text-lg">👤</div>
+              <div className="h-8 w-8 rounded-full bg-white/20 mr-3 grid place-items-center text-lg">
+                👤
+              </div>
               <div className="leading-tight text-left">
                 <div className="font-medium text-base">{displayName(user)}</div>
                 <div className="text-white/80 text-sm -mt-0.5">{displaySubtitle(user)}</div>
@@ -112,39 +117,39 @@ export default function TopNav() {
               <ChevronDown size={18} className="ml-2 opacity-80" />
             </button>
 
-            {open && (
-              <div
-                className="
+        {open && (
+          <div
+            className="
     absolute right-0 mt-2 w-64 z-50 rounded-xl
     bg-blue-500
     text-white border border-white/10 shadow-xl overflow-hidden
   "
-                role="menu"
-              >
-                <Link
-                  to="/profile"
-                  className="flex items-center gap-2 px-4 py-3 hover:bg-white/10 transition"
-                  role="menuitem"
-                >
-                  <User size={18} className="opacity-90" />
-                  <span className="font-medium">Profil użytkownika</span>
-                </Link>
+            role="menu"
+          >
+            <Link
+              to="/profile"
+              className="flex items-center gap-2 px-4 py-3 hover:bg-white/10 transition"
+              role="menuitem"
+            >
+              <User size={18} className="opacity-90" />
+              <span className="font-medium">Profil użytkownika</span>
+            </Link>
 
-                <div className="h-px bg-white/15" />
+            <div className="h-px bg-white/15" />
 
-                <button
-                  onClick={handleLogout}
-                  className="w-full text-left flex items-center gap-2 px-4 py-3 hover:bg-white/10 transition"
-                  role="menuitem"
-                >
-                  <LogOut size={18} className="opacity-90" />
-                  <span className="font-medium">Wyloguj</span>
-                </button>
-              </div>
-            )}
+            <button
+              onClick={handleLogout}
+              className="w-full text-left flex items-center gap-2 px-4 py-3 hover:bg-white/10 transition"
+              role="menuitem"
+            >
+              <LogOut size={18} className="opacity-90" />
+              <span className="font-medium">Wyloguj</span>
+            </button>
           </div>
-        </div>
+        )}
       </div>
-    </header>
+    </div>
+      </div >
+    </header >
   );
 }
