@@ -1,0 +1,1140 @@
+{
+  "universities": [
+    {
+      "name": "Akademia Górniczo-Hutnicza",
+      "short": "AGH",
+      "domains": [
+        "agh.edu.pl",
+        "agh.pl"
+      ],
+      "faculties": [
+        "Wydział Matematyki Stosowanej",
+        "Wydział Informatyki",
+        "Wydział Informatyki, Elektroniki i Telekomunikacji",
+        "Wydział Elektrotechniki, Automatyki, Informatyki i Inżynierii Biomedycznej",
+        "Wydział Fizyki i Informatyki Stosowanej",
+        "Wydział Energetyki i Paliw",
+        "Wydział Inżynierii Materiałowej i Ceramiki",
+        "Wydział Inżynierii Mechanicznej i Robotyki",
+        "Wydział Inżynierii Lądowej i Gospodarki Zasobami",
+        "Wydział Inżynierii Metali i Informatyki Przemysłowej",
+        "Wydział Górnictwa i Geoinżynierii",
+        "Wydział Geodezji Górniczej i Inżynierii Środowiska",
+        "Wydział Geologii, Geofizyki i Ochrony Środowiska",
+        "Wydział Odlewnictwa",
+        "Wydział Wiertnictwa, Nafty i Gazu",
+        "Wydział Zarządzania",
+        "Wydział Humanistyczny"
+      ],
+      "contacts": {
+        "address": {
+          "street": "al. Adama Mickiewicza 30",
+          "postal_code": "30-059",
+          "city": "Kraków",
+          "country": "Polska",
+          "lat": 50.064528,
+          "lon": 19.92375
+        },
+        "phones": [
+          "+48 12 617 20 02",
+          "+48 12 633 49 98"
+        ],
+        "email": "rektorat@agh.edu.pl",
+        "www": "https://www.agh.edu.pl",
+        "bip": "https://bip.malopolska.pl/agh",
+        "hours": null,
+        "logo": "https://i.studyinpoland.pl/universities/logo/agh-university-of-science-and-technology.png",
+        "social": {
+          "facebook": "https://www.facebook.com/AGH.Krakow",
+          "linkedin": null,
+          "youtube": "https://www.youtube.com/user/tvagh",
+          "x": "https://x.com/agh_krakow"
+        },
+        "recruitment": {
+          "email": "rekrutacja@agh.edu.pl",
+          "phone": "+48 12 617 36 84",
+          "www": "https://rekrutacja.agh.edu.pl",
+          "hours": "pon–pt 9:00–15:00"
+        },
+        "international": {
+          "email": "international.students@agh.edu.pl",
+          "phone": "+48 12 617 50 92",
+          "www": "https://www.international.agh.edu.pl"
+        },
+        "press": {
+          "email": "rzecznik@agh.edu.pl",
+          "phone": "+48 12 617 25 45"
+        },
+        "faculties_offices": [
+          {
+            "faculty": "Wydział Elektrotechniki, Automatyki, Informatyki i Inżynierii Biomedycznej",
+            "email": "eaiib@agh.edu.pl",
+            "phone": "+48 12 617 28 00"
+          }
+        ],
+        "rss": null
+      }
+    },
+    {
+      "name": "Uniwersytet Jagielloński",
+      "short": "UJ",
+      "domains": [
+        "uj.edu.pl",
+        "uj.pl"
+      ],
+      "faculties": [
+        "Wydział Prawa i Administracji",
+        "Wydział Lekarski",
+        "Wydział Farmaceutyczny",
+        "Wydział Nauk o Zdrowiu",
+        "Wydział Filozoficzny",
+        "Wydział Historyczny",
+        "Wydział Filologiczny",
+        "Wydział Polonistyki",
+        "Wydział Zarządzania i Komunikacji Społecznej",
+        "Wydział Biologii",
+        "Wydział Chemii",
+        "Wydział Fizyki, Astronomii i Informatyki Stosowanej",
+        "Wydział Matematyki i Informatyki",
+        "Wydział Geografii i Geologii",
+        "Wydział Studiów Międzynarodowych i Politycznych"
+      ],
+      "contacts": {
+        "address": {
+          "street": "ul. Gołębia 24",
+          "postal_code": "31-007",
+          "city": "Kraków",
+          "country": "Polska",
+          "lat": 50.06198,
+          "lon": 19.93685
+        },
+        "phones": [
+          "+48 12 663 11 00",
+          "+48 12 422 10 33"
+        ],
+        "email": "sekretariat@uj.edu.pl",
+        "www": "https://www.uj.edu.pl",
+        "bip": "https://bip.uj.edu.pl",
+        "hours": "pon–pt 8:00–15:00",
+        "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/54/Herb_Uniwersytetu_Jagiello%C5%84skiego.svg/1232px-Herb_Uniwersytetu_Jagiello%C5%84skiego.svg.png",
+        "social": {
+          "facebook": "https://www.facebook.com/UniwersytetJagiellonski",
+          "linkedin": "https://www.linkedin.com/school/jagiellonian-university/",
+          "youtube": "https://www.youtube.com/user/UniwersytetJagiellonski",
+          "x": "https://x.com/UniJagiellonski"
+        },
+        "recruitment": {
+          "email": "rekrutacja@uj.edu.pl",
+          "phone": "+48 12 663 11 01",
+          "www": "https://rekrutacja.uj.edu.pl",
+          "hours": "pon–pt 9:00–15:00"
+        },
+        "international": {
+          "email": "international.office@uj.edu.pl",
+          "phone": "+48 12 663 38 55",
+          "www": "https://international.uj.edu.pl"
+        },
+        "press": {
+          "email": "biuro.prasowe@uj.edu.pl",
+          "phone": "+48 12 663 38 11"
+        },
+        "faculties_offices": [
+          {
+            "faculty": "Wydział Matematyki i Informatyki",
+            "email": "dziekanat@wmi.uj.edu.pl",
+            "phone": "+48 12 664 67 01"
+          }
+        ],
+        "rss": "https://www.uj.edu.pl/rss"
+      }
+    },
+    {
+      "name": "Politechnika Krakowska",
+      "short": "PK",
+      "domains": [
+        "pk.edu.pl",
+        "pk.pl"
+      ],
+      "faculties": [
+        "Wydział Inżynierii Lądowej",
+        "Wydział Mechaniczny",
+        "Wydział Inżynierii i Technologii Chemicznej",
+        "Wydział Informatyki i Telekomunikacji",
+        "Wydział Architektury"
+      ],
+      "contacts": {
+        "address": {
+          "street": "ul. Warszawska 24",
+          "postal_code": "31-155",
+          "city": "Kraków",
+          "country": "Polska",
+          "lat": null,
+          "lon": null
+        },
+        "phones": [
+          "+48 12 628 20 00"
+        ],
+        "fax": "+48 12 628 20 71",
+        "email": "",
+        "www": "https://www.pk.edu.pl",
+        "bip": "",
+        "hours": "pon–pt 10:00–14:00",
+        "logo": "https://www.pk.edu.pl/images/PK18/promocja/KIW_2020/SYGNET_PK/PK_SYGNET_RGB.jpg",
+        "social": {
+          "facebook": "",
+          "linkedin": "",
+          "youtube": "",
+          "x": ""
+        },
+        "recruitment": {
+          "email": "rekrutacja-wil@pk.edu.pl",
+          "phone": "503 744 778",
+          "www": "",
+          "hours": ""
+        },
+        "international": {
+          "email": "international.office@pk.edu.pl",
+          "phone": "+48 12 611 38 55",
+          "www": "https://international.pk.edu.pl"
+        },
+        "press": {
+          "email": "biuro.prasowe@pk.edu.pl",
+          "phone": "+48 12 611 38 11"
+        },
+        "faculties_offices": [
+          {
+            "faculty": "Wydział Architektury",
+            "email": "dziekanat.wa@pk.edu.pl",
+            "phone": "12 628 31 45"
+          }
+        ],
+        "rss": ""
+      }
+    },
+    {
+      "name": "Uniwersytet Ekonomiczny",
+      "short": "UEK",
+      "domains": [
+        "uek.edu.pl",
+        "uek.pl"
+      ],
+      "faculties": [
+        "Wydział Ekonomii i Finansów",
+        "Wydział Zarządzania",
+        "Wydział Towaroznawstwa i Zarządzania Produktem",
+        "Wydział Gospodarki i Administracji Publicznej",
+        "Wydział Informatyki i Statystyki"
+      ],
+      "contacts": {
+        "address": {
+          "street": "ul. Rakowicka 27",
+          "postal_code": "31-510",
+          "city": "Kraków",
+          "country": "PL",
+          "lat": 50.0673,
+          "lon": 19.9527
+        },
+        "phones": [
+          "+48 12 293 50 00"
+        ],
+        "email": "kontakt@uek.krakow.pl",
+        "www": "https://uek.krakow.pl",
+        "bip": "https://bip.uek.krakow.pl",
+        "hours": "poniedziałek-piątek 8:00–16:00",
+        "logo": "https://media.krakow.travel/photos/21552/xxl.jpg",
+        "social": {
+          "facebook": "https://facebook.com/UEKrakow",
+          "linkedin": "https://www.linkedin.com/school/uek/",
+          "youtube": "https://www.youtube.com/@UEK",
+          "x": "https://x.com/UEKrakow"
+        },
+        "recruitment": {
+          "email": "rekrutacja@uek.krakow.pl",
+          "phone": "+48 12 293 55 55",
+          "www": "https://rekrutacja.uek.krakow.pl",
+          "hours": "pn-pt 9:00–15:00"
+        },
+        "international": {
+          "email": "erasmus@uek.krakow.pl",
+          "phone": "+48 12 293 60 60",
+          "www": "https://international.uek.krakow.pl"
+        },
+        "press": {
+          "email": "media@uek.krakow.pl",
+          "phone": "+48 12 293 40 40"
+        },
+        "faculties_offices": [
+          {
+            "faculty": "Wydział Ekonomii i Finansów",
+            "email": "dziekanat-weif@uek.krakow.pl",
+            "phone": "+48 12 293 70 01"
+          }
+        ],
+        "rss": "https://uek.krakow.pl/aktualnosci/rss"
+      }
+    },
+    {
+      "name": "Uniwersytet Komisji Edukacji Narodowej",
+      "short": "UKEN",
+      "domains": [
+        "uken.edu.pl",
+        "uken.pl"
+      ],
+      "faculties": [
+        "Wydział Humanistyczny",
+        "Wydział Nauk Ścisłych i Przyrodniczych",
+        "Wydział Nauk Społecznych",
+        "Wydział Sztuki",
+        "Wydział Pedagogiki i Psychologii"
+      ],
+      "contacts": {
+        "address": {
+          "street": "ul. Podchorążych 2",
+          "postal_code": "30-084",
+          "city": "Kraków",
+          "country": "Polska",
+          "lat": 50.07228,
+          "lon": 19.89874
+        },
+        "phones": [
+          "+48 12 662 60 00"
+        ],
+        "email": "sekretariat@uken.edu.pl",
+        "www": "https://www.uken.krakow.pl",
+        "bip": "https://bip.uken.krakow.pl",
+        "hours": "pon–pt 8:00–15:00",
+        "logo": "https://www.uken.krakow.pl/images/dokumenty/identyfikacja-wizualna/logo/sygnet/UKEN-sygnet-kolor-rgb.png",
+        "social": {
+          "facebook": "https://www.facebook.com/UniwersytetKEN",
+          "linkedin": "https://www.linkedin.com/school/uniwersytet-ken-krakow/",
+          "youtube": "https://www.youtube.com/@UniwersytetKEN",
+          "x": "https://x.com/UniwersytetKEN"
+        },
+        "recruitment": {
+          "email": "rekrutacja@uken.edu.pl",
+          "phone": "+48 12 662 60 20",
+          "www": "https://rekrutacja.uken.krakow.pl",
+          "hours": "pon–pt 9:00–15:00"
+        },
+        "international": {
+          "email": "erasmus@uken.edu.pl",
+          "phone": "+48 12 662 67 89",
+          "www": "https://international.uken.krakow.pl"
+        },
+        "press": {
+          "email": "biuroprasowe@uken.edu.pl",
+          "phone": "+48 12 662 61 11"
+        },
+        "faculties_offices": [
+          {
+            "faculty": "Wydział Humanistyczny",
+            "email": "dziekanat.wh@uken.edu.pl",
+            "phone": "+48 12 662 62 10"
+          }
+        ],
+        "rss": "https://www.uken.krakow.pl/rss"
+      }
+    },
+    {
+      "name": "Akademia Wychowania Fizycznego im. Bronisława Czecha",
+      "short": "AWF",
+      "domains": [
+        "awf.edu.pl",
+        "awf.pl"
+      ],
+      "faculties": [
+        "Wydział Wychowania Fizycznego i Sportu",
+        "Wydział Rehabilitacji Ruchowej",
+        "Wydział Turystyki i Rekreacji",
+        "Wydział Nauk o Sporcie",
+        "Wydział Nauk o Zdrowiu"
+      ],
+      "contacts": {
+        "address": {
+          "street": "al. Jana Pawła II 78",
+          "postal_code": "31-571",
+          "city": "Kraków",
+          "country": "Polska",
+          "lat": 50.07295,
+          "lon": 19.98777
+        },
+        "phones": [
+          "+48 12 683 10 00",
+          "+48 12 683 11 00"
+        ],
+        "email": "sekretariat@awf.krakow.pl",
+        "www": "https://www.awf.krakow.pl",
+        "bip": "https://bip.awf.krakow.pl",
+        "hours": "pon–pt 8:00–15:00",
+        "logo": "https://www.akf.krakow.pl/images/KSIEGA-ZNAKU/logo/akf-rgb.jpg",
+        "social": {
+          "facebook": "https://www.facebook.com/awfkrakow",
+          "linkedin": "https://www.linkedin.com/school/awf-krakow/",
+          "youtube": "https://www.youtube.com/@awfkrakow",
+          "x": "https://x.com/awfkrakow"
+        },
+        "recruitment": {
+          "email": "rekrutacja@awf.krakow.pl",
+          "phone": "+48 12 683 11 20",
+          "www": "https://rekrutacja.awf.krakow.pl",
+          "hours": "pon–pt 9:00–15:00"
+        },
+        "international": {
+          "email": "erasmus@awf.krakow.pl",
+          "phone": "+48 12 683 11 30",
+          "www": "https://www.awf.krakow.pl/erasmus"
+        },
+        "press": {
+          "email": "biuroprasowe@awf.krakow.pl",
+          "phone": "+48 12 683 11 40"
+        },
+        "faculties_offices": [
+          {
+            "faculty": "Wydział Wychowania Fizycznego i Sportu",
+            "email": "dziekanat.wwfis@awf.krakow.pl",
+            "phone": "+48 12 683 12 10"
+          }
+        ],
+        "rss": "https://www.awf.krakow.pl/rss"
+      }
+    },
+    {
+      "name": "Akademia Sztuk Pięknych im. Jana Matejki",
+      "short": "ASP",
+      "domains": [
+        "asp.krakow.pl",
+        "asp.edu.pl",
+        "asp.pl"
+      ],
+      "faculties": [
+        "Wydział Malarstwa",
+        "Wydział Grafiki",
+        "Wydział Rzeźby",
+        "Wydział Architektury Wnętrz",
+        "Wydział Intermediów",
+        "Wydział Konserwacji i Restauracji Dzieł Sztuki",
+        "Wydział Form Przemysłowych"
+      ],
+      "contacts": {
+        "address": {
+          "street": "pl. Jana Matejki 13",
+          "postal_code": "31-157",
+          "city": "Kraków",
+          "country": "Polska",
+          "lat": 50.0676,
+          "lon": 19.9394
+        },
+        "phones": [
+          "+48 12 299 20 00",
+          "+48 12 422 10 33"
+        ],
+        "email": "sekretariat@asp.krakow.pl",
+        "www": "https://www.asp.krakow.pl",
+        "bip": "https://bip.asp.krakow.pl",
+        "hours": "pon–pt 8:00–15:00",
+        "logo": "https://upload.wikimedia.org/wikipedia/commons/e/e4/Akademia_Sztuk_Pi%C4%99knych_w_Krakowie_logo.svg",
+        "social": {
+          "facebook": "https://www.facebook.com/ASPKrakow",
+          "linkedin": "https://www.linkedin.com/school/akademia-sztuk-pięknych-im-jana-matejki-w-krakowie/",
+          "youtube": "https://www.youtube.com/@ASPKrakow",
+          "x": "https://x.com/ASPKrakow"
+        },
+        "recruitment": {
+          "email": "rekrutacja@asp.krakow.pl",
+          "phone": "+48 12 299 20 50",
+          "www": "https://rekrutacja.asp.krakow.pl",
+          "hours": "pon–pt 9:00–14:00"
+        },
+        "international": {
+          "email": "erasmus@asp.krakow.pl",
+          "phone": "+48 12 299 21 10",
+          "www": "https://erasmus.asp.krakow.pl"
+        },
+        "press": {
+          "email": "biuroprasowe@asp.krakow.pl",
+          "phone": "+48 12 299 20 70"
+        },
+        "faculties_offices": [
+          {
+            "faculty": "Wydział Malarstwa",
+            "email": "dziekanat.malarstwo@asp.krakow.pl",
+            "phone": "+48 12 299 22 20"
+          }
+        ],
+        "rss": "https://www.asp.krakow.pl/rss"
+      }
+    },
+    {
+      "name": "Akademia Muzyczna im. Krzysztofa Pendereckiego",
+      "short": "AMKP",
+      "domains": [
+        "amuz.krakow.pl",
+        "ampk.edu.pl",
+        "ampk.pl"
+      ],
+      "faculties": [
+        "Wydział Instrumentalny",
+        "Wydział Wokalno-Aktorski",
+        "Wydział Kompozycji, Dyrygentury i Teorii Muzyki",
+        "Wydział Edukacji Muzycznej",
+        "Wydział Muzyki Współczesnej i Jazzu"
+      ],
+      "contacts": {
+        "address": {
+          "street": "ul. św. Tomasza 43",
+          "postal_code": "31-027",
+          "city": "Kraków",
+          "country": "Polska",
+          "lat": 50.0647,
+          "lon": 19.9409
+        },
+        "phones": [
+          "+48 12 422 04 55",
+          "+48 12 421 66 36"
+        ],
+        "email": "sekretariat@amuz.krakow.pl",
+        "www": "https://www.amuz.krakow.pl",
+        "bip": "https://bip.amuz.krakow.pl",
+        "hours": "pon–pt 8:00–15:00",
+        "logo": "https://upload.wikimedia.org/wikipedia/commons/6/60/Academy_of_Music_in_Krak%C3%B3w_logo.png",
+        "social": {
+          "facebook": "https://www.facebook.com/AMKrakow",
+          "linkedin": "https://www.linkedin.com/school/akademia-muzyczna-w-krakowie/",
+          "youtube": "https://www.youtube.com/@AMKrakow",
+          "x": "https://x.com/AMKrakow"
+        },
+        "recruitment": {
+          "email": "rekrutacja@amuz.krakow.pl",
+          "phone": "+48 12 422 04 55",
+          "www": "https://rekrutacja.amuz.krakow.pl",
+          "hours": "pon–pt 9:00–14:00"
+        },
+        "international": {
+          "email": "international@amuz.krakow.pl",
+          "phone": "+48 12 421 66 36",
+          "www": "https://amuz.krakow.pl/international"
+        },
+        "press": {
+          "email": "biuroprasowe@amuz.krakow.pl",
+          "phone": "+48 12 422 04 55"
+        },
+        "faculties_offices": [
+          {
+            "faculty": "Wydział Instrumentalny",
+            "email": "dziekanat.instrumentalny@amuz.krakow.pl",
+            "phone": "+48 12 422 04 55"
+          }
+        ],
+        "rss": "https://www.amuz.krakow.pl/rss"
+      }
+    },
+    {
+      "name": "Akademia Sztuk Teatralnych im. Stanisława Wyspiańskiego",
+      "short": "AST",
+      "domains": [
+        "ast.krakow.pl",
+        "ast.edu.pl",
+        "ast.pl"
+      ],
+      "faculties": [
+        "Wydział Aktorski",
+        "Wydział Reżyserii",
+        "Wydział Scenografii",
+        "Wydział Teatru Tańca",
+        "Wydział Dramatu"
+      ],
+      "contacts": {
+        "address": {
+          "street": "ul. Straszewskiego 22",
+          "postal_code": "31-113",
+          "city": "Kraków",
+          "country": "Polska",
+          "lat": 50.0599,
+          "lon": 19.9318
+        },
+        "phones": [
+          "+48 12 422 10 33",
+          "+48 12 422 74 14"
+        ],
+        "email": "sekretariat@ast.krakow.pl",
+        "www": "https://www.ast.krakow.pl",
+        "bip": "https://bip.ast.krakow.pl",
+        "hours": "pon–pt 9:00–15:00",
+        "logo": "https://www.ast.krakow.pl/wp-content/themes/ast/default.png",
+        "social": {
+          "facebook": "https://www.facebook.com/AST.Krakow",
+          "linkedin": "https://www.linkedin.com/school/akademia-sztuk-teatralnych-w-krakowie/",
+          "youtube": "https://www.youtube.com/@ASTKrakow",
+          "x": "https://x.com/AST_Krakow"
+        },
+        "recruitment": {
+          "email": "rekrutacja@ast.krakow.pl",
+          "phone": "+48 12 422 74 14",
+          "www": "https://www.ast.krakow.pl/rekrutacja",
+          "hours": "pon–pt 10:00–14:00"
+        },
+        "international": {
+          "email": "international@ast.krakow.pl",
+          "phone": "+48 12 422 10 33",
+          "www": "https://www.ast.krakow.pl/international"
+        },
+        "press": {
+          "email": "biuroprasowe@ast.krakow.pl",
+          "phone": "+48 12 422 10 33"
+        },
+        "faculties_offices": [
+          {
+            "faculty": "Wydział Aktorski",
+            "email": "dziekanat.wa@ast.krakow.pl",
+            "phone": "+48 12 422 74 14"
+          }
+        ],
+        "rss": "https://www.ast.krakow.pl/rss"
+      }
+    },
+    {
+      "name": "Akademia Ignatianum",
+      "short": "AIK",
+      "domains": [
+        "ignatianum.edu.pl",
+        "aik.edu.pl",
+        "aik.pl"
+      ],
+      "faculties": [
+        "Wydział Filozoficzny",
+        "Wydział Pedagogiczny",
+        "Wydział Nauk Społecznych",
+        "Wydział Humanistyczny",
+        "Wydział Języków Nowożytnych"
+      ],
+      "contacts": {
+        "address": {
+          "street": "ul. Kopernika 26",
+          "postal_code": "31-501",
+          "city": "Kraków",
+          "country": "Polska",
+          "lat": 50.0635,
+          "lon": 19.9503
+        },
+        "phones": [
+          "+48 12 399 95 00"
+        ],
+        "email": "sekretariat@ignatianum.edu.pl",
+        "www": "https://www.ignatianum.edu.pl",
+        "bip": "https://bip.ignatianum.edu.pl",
+        "hours": "pon–pt 8:00–15:00",
+        "logo": "https://pck.malopolska.pl/wp-content/uploads/2019/05/akademia-ignatianum-logo.jpg",
+        "social": {
+          "facebook": "https://www.facebook.com/AkademiaIgnatianum",
+          "linkedin": "https://www.linkedin.com/school/akademia-ignatianum-w-krakowie/",
+          "youtube": "https://www.youtube.com/@AkademiaIgnatianum",
+          "x": "https://x.com/AIKrakow"
+        },
+        "recruitment": {
+          "email": "rekrutacja@ignatianum.edu.pl",
+          "phone": "+48 12 399 95 20",
+          "www": "https://rekrutacja.ignatianum.edu.pl",
+          "hours": "pon–pt 9:00–14:00"
+        },
+        "international": {
+          "email": "international@ignatianum.edu.pl",
+          "phone": "+48 12 399 95 40",
+          "www": "https://www.ignatianum.edu.pl/international"
+        },
+        "press": {
+          "email": "biuroprasowe@ignatianum.edu.pl",
+          "phone": "+48 12 399 95 30"
+        },
+        "faculties_offices": [
+          {
+            "faculty": "Wydział Filozoficzny",
+            "email": "dziekanat.filozofia@ignatianum.edu.pl",
+            "phone": "+48 12 399 96 10"
+          }
+        ],
+        "rss": "https://www.ignatianum.edu.pl/rss"
+      }
+    },
+    {
+      "name": "Uniwersytet Papieski Jana Pawła II",
+      "short": "UPJPII",
+      "domains": [
+        "upjp2.edu.pl",
+        "upjp2.pl"
+      ],
+      "faculties": [
+        "Wydział Teologiczny",
+        "Wydział Filozoficzny",
+        "Wydział Nauk Społecznych",
+        "Wydział Historii i Dziedzictwa Kulturowego",
+        "Wydział Sztuki i Nauk o Kulturze"
+      ],
+      "contacts": {
+        "address": {
+          "street": "ul. Kanonicza 25",
+          "postal_code": "31-002",
+          "city": "Kraków",
+          "country": "Polska",
+          "lat": 50.0523,
+          "lon": 19.9376
+        },
+        "phones": [
+          "+48 12 421 84 12",
+          "+48 12 421 84 44"
+        ],
+        "email": "sekretariat@upjp2.edu.pl",
+        "www": "https://upjp2.edu.pl",
+        "bip": "https://bip.upjp2.edu.pl",
+        "hours": "pon–pt 8:00–15:00",
+        "logo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRNQ3pEs7kYKhYSx9XOb7_e3AePLM-E9GIV4w&s",
+        "social": {
+          "facebook": "https://www.facebook.com/upjp2krakow",
+          "linkedin": "https://www.linkedin.com/school/uniwersytet-papieski-jana-pawla-ii-w-krakowie/",
+          "youtube": "https://www.youtube.com/@upjp2krakow",
+          "x": "https://x.com/upjp2krakow"
+        },
+        "recruitment": {
+          "email": "rekrutacja@upjp2.edu.pl",
+          "phone": "+48 12 421 84 12",
+          "www": "https://rekrutacja.upjp2.edu.pl",
+          "hours": "pon–pt 9:00–14:00"
+        },
+        "international": {
+          "email": "erasmus@upjp2.edu.pl",
+          "phone": "+48 12 421 84 44",
+          "www": "https://upjp2.edu.pl/erasmus"
+        },
+        "press": {
+          "email": "biuroprasowe@upjp2.edu.pl",
+          "phone": "+48 12 421 84 33"
+        },
+        "faculties_offices": [
+          {
+            "faculty": "Wydział Teologiczny",
+            "email": "dziekanat.teologia@upjp2.edu.pl",
+            "phone": "+48 12 421 84 55"
+          }
+        ],
+        "rss": "https://upjp2.edu.pl/rss"
+      }
+    },
+    {
+      "name": "Krakowska Akademia im. Andrzeja Frycza Modrzewskiego",
+      "short": "KAAFM",
+      "domains": [
+        "afm.edu.pl",
+        "kaafm.edu.pl",
+        "kaafm.pl"
+      ],
+      "faculties": [
+        "Wydział Prawa, Administracji i Stosunków Międzynarodowych",
+        "Wydział Lekarski i Nauk o Zdrowiu",
+        "Wydział Ekonomii i Zarządzania",
+        "Wydział Nauk o Bezpieczeństwie",
+        "Wydział Architektury i Sztuk Pięknych"
+      ],
+      "contacts": {
+        "address": {
+          "street": "ul. Gustawa Herlinga-Grudzińskiego 1",
+          "postal_code": "30-705",
+          "city": "Kraków",
+          "country": "Polska",
+          "lat": 50.0382,
+          "lon": 19.9613
+        },
+        "phones": [
+          "+48 12 252 45 00"
+        ],
+        "email": "sekretariat@afm.edu.pl",
+        "www": "https://www.ka.edu.pl",
+        "bip": "https://bip.ka.edu.pl",
+        "hours": "pon–pt 8:00–15:00",
+        "logo": "https://uafm.edu.pl/wp-content/uploads/logo_pion_kolor.png",
+        "social": {
+          "facebook": "https://www.facebook.com/KrakowskaAkademia",
+          "linkedin": "https://www.linkedin.com/school/krakowska-akademia-im-andrzeja-frycza-modrzewskiego/",
+          "youtube": "https://www.youtube.com/@KrakowskaAkademia",
+          "x": "https://x.com/ka_afm"
+        },
+        "recruitment": {
+          "email": "rekrutacja@afm.edu.pl",
+          "phone": "+48 12 252 45 45",
+          "www": "https://rekrutacja.ka.edu.pl",
+          "hours": "pon–pt 9:00–15:00"
+        },
+        "international": {
+          "email": "international@afm.edu.pl",
+          "phone": "+48 12 252 45 60",
+          "www": "https://international.ka.edu.pl"
+        },
+        "press": {
+          "email": "biuroprasowe@afm.edu.pl",
+          "phone": "+48 12 252 45 55"
+        },
+        "faculties_offices": [
+          {
+            "faculty": "Wydział Prawa, Administracji i Stosunków Międzynarodowych",
+            "email": "dziekanat.prawo@afm.edu.pl",
+            "phone": "+48 12 252 45 70"
+          }
+        ],
+        "rss": "https://www.ka.edu.pl/rss"
+      }
+    },
+    {
+      "name": "Wyższa Szkoła Zarządzania i Bankowości",
+      "short": "WSZiB",
+      "domains": [
+        "wszib.edu.pl",
+        "wszib.pl"
+      ],
+      "faculties": [
+        "Wydział Informatyki Stosowanej",
+        "Wydział Zarządzania",
+        "Wydział Finansów",
+        "Wydział Logistyki",
+        "Wydział Ekonomii"
+      ],
+      "contacts": {
+        "address": {
+          "street": "",
+          "postal_code": "",
+          "city": "",
+          "country": "",
+          "lat": null,
+          "lon": null
+        },
+        "phones": [
+          ""
+        ],
+        "email": "",
+        "www": "",
+        "bip": "",
+        "hours": "",
+        "logo": "",
+        "social": {
+          "facebook": "",
+          "linkedin": "",
+          "youtube": "",
+          "x": ""
+        },
+        "recruitment": {
+          "email": "",
+          "phone": "",
+          "www": "",
+          "hours": ""
+        },
+        "international": {
+          "email": "",
+          "phone": "",
+          "www": ""
+        },
+        "press": {
+          "email": "",
+          "phone": ""
+        },
+        "faculties_offices": [
+          {
+            "faculty": "",
+            "email": "",
+            "phone": ""
+          }
+        ],
+        "rss": ""
+      }
+    },
+    {
+      "name": "Uniwersytet Roliniczy im. Hugona Kołłątaja",
+      "short": "UR",
+      "domains": [
+        "ur.edu.pl",
+        "ur.pl"
+      ],
+      "faculties": [
+        "Wydział Rolniczo-Ekonomiczny",
+        "Wydział Leśny",
+        "Wydział Hodowli i Biologii Zwierząt",
+        "Wydział Inżynierii Środowiska i Geodezji",
+        "Wydział Biotechnologii i Ogrodnictwa",
+        "Wydział Technologii Żywności",
+        "Wydział Medycyny Weterynaryjnej",
+        "Wydział Inżynierii Produkcji i Energetyki"
+      ],
+      "contacts": {
+        "address": {
+          "street": "",
+          "postal_code": "",
+          "city": "",
+          "country": "",
+          "lat": null,
+          "lon": null
+        },
+        "phones": [
+          ""
+        ],
+        "email": "",
+        "www": "",
+        "bip": "",
+        "hours": "",
+        "logo": "",
+        "social": {
+          "facebook": "",
+          "linkedin": "",
+          "youtube": "",
+          "x": ""
+        },
+        "recruitment": {
+          "email": "",
+          "phone": "",
+          "www": "",
+          "hours": ""
+        },
+        "international": {
+          "email": "",
+          "phone": "",
+          "www": ""
+        },
+        "press": {
+          "email": "",
+          "phone": ""
+        },
+        "faculties_offices": [
+          {
+            "faculty": "",
+            "email": "",
+            "phone": ""
+          }
+        ],
+        "rss": ""
+      }
+    },
+    {
+      "name": "Wyższa Szkoła Zarządzania i Bankowości",
+      "short": "WSZiB",
+      "domains": [
+        "wszib.edu.pl",
+        "wszib.pl"
+      ],
+      "faculties": [
+        "Wydział Informatyki Stosowanej",
+        "Wydział Zarządzania",
+        "Wydział Finansów",
+        "Wydział Logistyki",
+        "Wydział Ekonomii"
+      ],
+      "contacts": {
+        "address": {
+          "street": "al. Kijowska 14",
+          "postal_code": "30-079",
+          "city": "Kraków",
+          "country": "Polska",
+          "lat": 50.0739,
+          "lon": 19.9132
+        },
+        "phones": [
+          "+48 12 635 68 00",
+          "+48 12 635 68 05",
+          "+48 12 635 68 06"
+        ],
+        "email": "wszib@wszib.edu.pl",
+        "www": "https://www.wszib.edu.pl",
+        "bip": "https://bip.wszib.edu.pl",
+        "hours": "",
+        "logo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQUdziIg8Z-FBZL4nOrjh9tJRG7q4ZfR3keQQ&s",
+        "social": {
+          "facebook": "https://www.facebook.com/wszibkrakow",
+          "linkedin": "https://www.linkedin.com/school/wyzsza-szkola-zarzadzania-i-bankowosci/",
+          "youtube": "https://www.youtube.com/user/WSZiBkrakow",
+          "x": ""
+        },
+        "recruitment": {
+          "email": "rekrutacja@wszib.edu.pl",
+          "phone": "+48 12 635 68 00",
+          "www": "https://www.wszib.edu.pl/rekrutacja",
+          "hours": ""
+        },
+        "international": {
+          "email": "erasmus@wszib.edu.pl",
+          "phone": "+48 12 635 68 00",
+          "www": "https://www.wszib.edu.pl/erasmus"
+        },
+        "press": {
+          "email": "wszib@wszib.edu.pl",
+          "phone": "+48 12 635 68 00"
+        },
+        "faculties_offices": [],
+        "rss": "https://www.wszib.edu.pl/feed/"
+      }
+    },
+    {
+      "name": "Wyższa Szkoła Europejska im. ks. Józefa Tischnera",
+      "short": "WSE",
+      "domains": [
+        "wse.edu.pl",
+        "wse.pl"
+      ],
+      "faculties": [
+        "Wydział Projektowania",
+        "Wydział Informacji i Zarządzania",
+        "Wydział Stosunków Międzynarodowych",
+        "Wydział Psychologii Stosowanej",
+        "Wydział Nowych Mediów"
+      ],
+      "contacts": {
+        "address": {
+          "street": "ul. Westerplatte 11",
+          "postal_code": "31-033",
+          "city": "Kraków",
+          "country": "Polska",
+          "lat": 50.0598,
+          "lon": 19.9451
+        },
+        "phones": [
+          "+48 12 683 24 00"
+        ],
+        "email": "wse@wse.krakow.pl",
+        "www": "https://www.wse.krakow.pl",
+        "bip": "https://wse.krakow.pl/bip",
+        "hours": "",
+        "logo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTagPY0lmQRDyd-Luewqpg2QHskbW9ovIKg8w&s",
+        "social": {
+          "facebook": "https://www.facebook.com/WSEkrakow",
+          "linkedin": "https://www.linkedin.com/school/wyzsza-szkola-europejska-im-ks-jozefa-tischnera/",
+          "youtube": "https://www.youtube.com/user/WSEKrakow",
+          "x": ""
+        },
+        "recruitment": {
+          "email": "rekrutacja@wse.krakow.pl",
+          "phone": "+48 12 683 24 60",
+          "www": "https://wse.krakow.pl/rekrutacja",
+          "hours": ""
+        },
+        "international": {
+          "email": "erasmus@wse.krakow.pl",
+          "phone": "+48 12 683 24 00",
+          "www": "https://wse.krakow.pl/erasmus"
+        },
+        "press": {
+          "email": "wse@wse.krakow.pl",
+          "phone": "+48 12 683 24 00"
+        },
+        "faculties_offices": [],
+        "rss": "https://wse.krakow.pl/feed/"
+      }
+    },
+    {
+      "name": "Wyższa Szkoła Ekonomii i Informatyki",
+      "short": "WSEI",
+      "domains": [
+        "wsei.edu.pl",
+        "wsei.pl"
+      ],
+      "faculties": [
+        "Wydział Informatyki",
+        "Wydział Ekonomii",
+        "Wydział Zarządzania",
+        "Wydział Finansów",
+        "Wydział Logistyki"
+      ],
+      "contacts": {
+        "address": {
+          "street": "ul. Św. Filipa 17",
+          "postal_code": "31-150",
+          "city": "Kraków",
+          "country": "Polska",
+          "lat": 50.0686,
+          "lon": 19.9466
+        },
+        "phones": [
+          "+48 12 431 18 90",
+          "+48 503 473 917"
+        ],
+        "email": "kancelaria@wsei.edu.pl",
+        "www": "https://www.wsei.edu.pl",
+        "bip": "https://wsei.edu.pl/bip",
+        "hours": "",
+        "logo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTbvWc7FXpKW3KaYFF3zv0fHDy_kB4JTIhi2A&s",
+        "social": {
+          "facebook": "https://www.facebook.com/WSEI.Krakow",
+          "linkedin": "https://www.linkedin.com/school/wsei-krakow/",
+          "youtube": "https://www.youtube.com/@wseikrakow",
+          "x": ""
+        },
+        "recruitment": {
+          "email": "rekrutacja@wsei.edu.pl",
+          "phone": "+48 503 473 917",
+          "www": "https://wsei.edu.pl/rekrutacja",
+          "hours": "pn.–sob. 8:30–16:00"
+        },
+        "international": {
+          "email": "erasmus@wsei.edu.pl",
+          "phone": "+48 12 431 18 90",
+          "www": "https://wsei.edu.pl/erasmus"
+        },
+        "press": {
+          "email": "kancelaria@wsei.edu.pl",
+          "phone": "+48 12 431 18 90"
+        },
+        "faculties_offices": [],
+        "rss": "https://wsei.edu.pl/feed/"
+      }
+    },
+    {
+      "name": "Wyższa Szkoła Bezpieczeństwa Publicznego i Indywidualnego \"Apeiron\"",
+      "short": "APEIRON",
+      "domains": [
+        "apeiron.edu.pl",
+        "apeiron.pl"
+      ],
+      "faculties": [
+        "Wydział Bezpieczeństwa Wewnętrznego",
+        "Wydział Bezpieczeństwa Narodowego",
+        "Wydział Kryminologii",
+        "Wydział Zarządzania Kryzysowego",
+        "Wydział Ochrony Danych i Cyberbezpieczeństwa"
+      ],
+      "contacts": {
+        "address": {
+          "street": "ul. Basztowa 10",
+          "postal_code": "31-143",
+          "city": "Kraków",
+          "country": "Polska",
+          "lat": 50.0653,
+          "lon": 19.9401
+        },
+        "phones": [
+          "+48 12 422 30 68",
+          "+48 663 350 870"
+        ],
+        "email": "kontakt@apeiron.edu.pl",
+        "www": "https://www.apeiron.edu.pl",
+        "bip": "https://apeiron.edu.pl/bip",
+        "hours": "",
+        "logo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSgsaJy6aNPzqGW65CqgajSfysZBPiQz_d1AA&s",
+        "social": {
+          "facebook": "https://www.facebook.com/ApeironKrakow",
+          "linkedin": "https://www.linkedin.com/school/wyzsza-szkola-bezpieczenstwa-publicznego-i-indywidualnego-apeiron/",
+          "youtube": "https://www.youtube.com/@apeironkrakow",
+          "x": ""
+        },
+        "recruitment": {
+          "email": "zapisy@apeiron.edu.pl",
+          "phone": "+48 663 350 870",
+          "www": "https://apeiron.edu.pl/rekrutacja",
+          "hours": "pn.–pt. 9:00–17:00, sob. 9:00–14:00 (VI–IX)"
+        },
+        "international": {
+          "email": "erasmus@apeiron.edu.pl",
+          "phone": "+48 12 422 30 68",
+          "www": "https://apeiron.edu.pl/erasmus"
+        },
+        "press": {
+          "email": "kontakt@apeiron.edu.pl",
+          "phone": "+48 12 422 30 68"
+        },
+        "faculties_offices": [],
+        "rss": "https://apeiron.edu.pl/feed/"
+      }
+    }
+  ]
+}
