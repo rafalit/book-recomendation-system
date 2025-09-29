@@ -66,6 +66,10 @@ export default function NotificationsDropdown({
         icon = <Flag className="text-red-600" size={18} />;
         color = "bg-red-50 border-red-200";
         break;
+      case "new_review":
+        icon = <MessageSquare className="text-purple-600" size={18} />;
+        color = "bg-purple-50 border-purple-200";
+        break;
       default:
         icon = <Bell className="text-yellow-500" size={18} />;
         color = "bg-yellow-50 border-yellow-200";

@@ -6,10 +6,10 @@ import HomePage from "./pages/HomePage";
 import ContactPage from "./pages/ContactPage";
 import EventsPage from "./pages/EventsPage";
 import ForumPage from "./pages/ForumPage";
-import  BooksPage  from "./pages/BooksPage";
+import BooksPage from "./pages/BooksPage";
+import RankingsPage from "./pages/RankingsPage";   // 🔥 NOWY IMPORT
 import ProtectedRoute from "./components/router/ProtectedRoute";
 import { AuthProvider } from "./components/auth/AuthContext";
-
 
 import "./App.css";
 
@@ -44,7 +44,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-
           <Route
             path="/forum"
             element={
@@ -53,12 +52,19 @@ function App() {
               </ProtectedRoute>
             }
           />
-
           <Route
             path="/books"
             element={
               <ProtectedRoute>
                 <BooksPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/rankings"   // 🔥 NOWA TRASA
+            element={
+              <ProtectedRoute>
+                <RankingsPage />
               </ProtectedRoute>
             }
           />

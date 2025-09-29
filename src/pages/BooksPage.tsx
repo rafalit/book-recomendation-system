@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+// src/pages/BooksPage.tsx
+import { useEffect, useMemo, useState, useCallback } from "react";
 import TopNav from "../components/layout/TopNav";
 import UniversitySidebar from "../components/home/UniversitySidebar";
 import BookList from "../components/books/BookList";
@@ -17,8 +18,9 @@ export default function BooksPage() {
   const [cfg, setCfg] = useState<Config | null>(null);
   const [selected, setSelected] = useState<string>("wszystkie");
 
-  const [allBooks, setAllBooks] = useState<Book[]>([]); // 🔹 pełna lista
-  const [books, setBooks] = useState<Book[]>([]);       // 🔹 przefiltrowana lista
+  const [allBooks, setAllBooks] = useState<Book[]>([]);
+  const [books, setBooks] = useState<Book[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
 
   const [loading, setLoading] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -27,7 +29,7 @@ export default function BooksPage() {
     query: "",
     sortBy: "newest",
     availableOnly: false,
-    categories: ["Wszystkie"],
+    categories: ["Wszystkie"], // ✅ domyślnie wszystkie
   });
 
   const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -48,23 +50,10 @@ export default function BooksPage() {
     );
   }, [cfg]);
 
-  // 🔹 lista kategorii – zawsze na podstawie allBooks
-  const categories = useMemo(() => {
-    const set = new Set<string>();
-    allBooks.forEach((b) => {
-      if (b.categories) {
-        b.categories.split(",").forEach((c) => set.add(c.trim()));
-      }
-    });
-    return Array.from(set).sort();
-  }, [allBooks]);
-
-  // pobranie książek
-  useEffect(() => {
-    if (!cfg) return;
-    const ctrl = new AbortController();
-
-    const fetchBooks = async () => {
+  // ✅ fetchBooks jako funkcja (useCallback, żeby nie robić nowych referencji)
+  const fetchBooks = useCallback(
+    async (ctrl?: AbortController) => {
+      if (!cfg) return;
       setLoading(true);
       try {
         let fetched: Book[] = [];
@@ -73,76 +62,91 @@ export default function BooksPage() {
           const uniNames = universities.slice(0, 17);
           const r = await api.get<Record<string, Book[]>>("/books/multi", {
             params: { q: uniNames, limit_each: 200 },
-            signal: ctrl.signal as any,
+            signal: ctrl?.signal as any,
           });
           fetched = Object.values(r.data).flat();
         } else {
           const r = await api.get<Book[]>("/books", {
             params: { q: selected, max_results: 200 },
-            signal: ctrl.signal as any,
+            signal: ctrl?.signal as any,
           });
           fetched = r.data;
         }
 
-        // 🔹 zapisz pełną listę do allBooks
         setAllBooks(fetched);
 
-        // 🔎 filtracja
-        let filtered = [...fetched];
-
-        if (filters.query) {
-          filtered = filtered.filter((b) =>
-            b.title.toLowerCase().includes(filters.query.toLowerCase())
-          );
-        }
-        if (filters.availableOnly) {
-          filtered = filtered.filter((b) => {
-            const loaned = loans.some((l) => l.book_id === b.id && !l.returned_at);
-            return (b.available_copies ?? 0) > 0 && !loaned;
-          });
-        }
-        if (!(filters.categories.length === 1 && filters.categories[0] === "Wszystkie")) {
-          filtered = filtered.filter((b) =>
-            filters.categories.some((cat) =>
-              b.categories?.toLowerCase().includes(cat.toLowerCase())
-            )
-          );
-        }
-
-        // 🔎 sortowanie
-        if (filters.sortBy === "newest") {
-          filtered = filtered.sort(
-            (a, b) =>
-              new Date(b.published_date ?? "1900").getTime() -
-              new Date(a.published_date ?? "1900").getTime()
-          );
-        } else if (filters.sortBy === "oldest") {
-          filtered = filtered.sort(
-            (a, b) =>
-              new Date(a.published_date ?? "2100").getTime() -
-              new Date(b.published_date ?? "2100").getTime()
-          );
-        }
-
-        setBooks(filtered);
+        // kategorie dla dropdowna
+        const setCat = new Set<string>();
+        fetched.forEach((b) => {
+          if (b.categories) {
+            b.categories.split(",").forEach((c) => setCat.add(c.trim()));
+          }
+        });
+        setCategories(Array.from(setCat).sort());
       } catch (e: any) {
-        if (e?.name !== "CanceledError") setBooks([]);
+        if (e?.name !== "CanceledError") setAllBooks([]);
       } finally {
         setLoading(false);
       }
-    };
+    },
+    [cfg, selected, universities]
+  );
 
-    fetchBooks();
+  // pobranie książek przy mount i zmianie uczelni
+  useEffect(() => {
+    const ctrl = new AbortController();
+    fetchBooks(ctrl);
     return () => ctrl.abort();
-  }, [cfg, selected, universities, filters, loans]);
+  }, [fetchBooks]);
+
+  // 🔹 filtracja robiona na podstawie allBooks
+  useEffect(() => {
+    let filtered = [...allBooks];
+
+    if (filters.query) {
+      filtered = filtered.filter((b) =>
+        b.title.toLowerCase().includes(filters.query.toLowerCase())
+      );
+    }
+    if (filters.availableOnly) {
+      filtered = filtered.filter((b) => {
+        const loaned = loans.some((l) => l.book_id === b.id && !l.returned_at);
+        return (b.available_copies ?? 0) > 0 && !loaned;
+      });
+    }
+    if (
+      filters.categories.length > 0 &&
+      !filters.categories.includes("Wszystkie")
+    ) {
+      filtered = filtered.filter((b) =>
+        filters.categories.some((cat) =>
+          b.categories?.toLowerCase().includes(cat.toLowerCase())
+        )
+      );
+    }
+
+    // sortowanie
+    if (filters.sortBy === "newest") {
+      filtered = filtered.sort(
+        (a, b) =>
+          new Date(b.published_date ?? "1900").getTime() -
+          new Date(a.published_date ?? "1900").getTime()
+      );
+    } else {
+      filtered = filtered.sort(
+        (a, b) =>
+          new Date(a.published_date ?? "2100").getTime() -
+          new Date(b.published_date ?? "2100").getTime()
+      );
+    }
+
+    setBooks(filtered);
+  }, [allBooks, filters, loans]);
 
   return (
     <div className="h-screen overflow-hidden bg-slate-100 flex flex-col">
       <TopNav />
-      <div
-        className="mx-auto max-w-[2000px] px-2 py-4 w-full
-             h-[calc(100vh-80px)] grid grid-cols-1 md:grid-cols-[400px,1fr] gap-4 overflow-hidden"
-      >
+      <div className="mx-auto max-w-[2000px] px-2 py-4 w-full h-[calc(100vh-80px)] grid grid-cols-1 md:grid-cols-[400px,1fr] gap-4 overflow-hidden">
         {/* sidebar uczelni */}
         <div className="h-full overflow-hidden bg-blue-600 text-white rounded-2xl">
           <UniversitySidebar
@@ -160,7 +164,7 @@ export default function BooksPage() {
               onChange={setFilters}
               resultCount={books.length}
               disableAvailableToggle={selected === "wszystkie"}
-              categories={categories} // 🔹 przekazujemy wszystkie kategorie
+              categories={categories}
             />
 
             {selected !== "wszystkie" && (
@@ -194,8 +198,7 @@ export default function BooksPage() {
           university={selected}
           onAdded={() => {
             setShowAddModal(false);
-            // odświeżenie listy książek
-            setFilters({ ...filters });
+            fetchBooks(); // ✅ odświeżenie po dodaniu
           }}
         />
       )}

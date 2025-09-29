@@ -28,6 +28,7 @@ type Props = {
   open: boolean;
   onClose: () => void;
   onBookUpdate?: (data: Partial<Book>) => void;
+  readOnly?: boolean;
 };
 
 // 🔹 badge roli + uczelni
@@ -54,6 +55,7 @@ export default function BookReviewModal({
   open,
   onClose,
   onBookUpdate,
+  readOnly = false,
 }: Props) {
   const [rating, setRating] = useState(0);
   const [text, setText] = useState("");
