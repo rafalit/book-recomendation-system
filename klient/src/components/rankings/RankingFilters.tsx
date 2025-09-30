@@ -8,7 +8,7 @@ export type RankingFiltersValue = {
   minStars: number;
   maxStars: number;
   categories: string[];
-  year: "" | number;
+  year: number | null;
 };
 
 export default function RankingFilters({
@@ -172,9 +172,9 @@ export default function RankingFilters({
         <div className="flex items-center gap-2">
           <Calendar size={16} className="text-slate-500" />
           <select
-            value={value.year}
+            value={value.year ?? ""}
             onChange={(e) =>
-              onChange({ ...value, year: e.target.value ? Number(e.target.value) : "" })
+              onChange({ ...value, year: e.target.value ? Number(e.target.value) : null })
             }
             className="h-10 rounded-lg bg-white border border-slate-300 px-3"
           >

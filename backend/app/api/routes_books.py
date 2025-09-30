@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from datetime import date
 from typing import List, Dict
 from sqlalchemy import func, or_
+from sqlalchemy.orm import joinedload
 import json as _json
 
 from app.services.recommend import recommend_books
@@ -113,7 +114,7 @@ def fetch_books_for_uni(db: Session, uni: str, limit_each: int = 40, pages: int 
 @router.get("/", response_model=List[schemas.book.BookOut])
 def list_books(
     q: str = Query(..., description="Nazwa uczelni"),
-    max_results: int = 100,
+    max_results: int = 20,
     query: str | None = Query(None, description="Fraza do wyszukiwania"),
     available_only: bool = Query(False, description="Tylko dostępne"),
     categories: list[str] = Query([], description="Lista kategorii"),
@@ -260,7 +261,7 @@ def list_books(
 @router.get("/multi", response_model=Dict[str, List[BookOut]])
 def books_multi(
     q: List[str] = Query(..., description="Lista uczelni"),
-    limit_each: int = 100,
+    limit_each: int = 20,
     query: str | None = Query(None, description="Fraza do wyszukiwania"),
     available_only: bool = Query(False, description="Tylko dostępne"),
     categories: list[str] = Query([], description="Lista kategorii"),
@@ -400,6 +401,37 @@ def books_multi(
 
     return results
 
+@router.get("/mine", response_model=list[schemas.book.BookOut])
+def my_books(
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+):
+    books = (
+        db.query(models.book.Book)
+        .filter(models.book.Book.created_by == user.id)
+        .order_by(models.book.Book.id.desc())
+        .all()
+    )
+    return [
+        _enrich_with_ratings(
+            db,
+            {
+                "id": b.id,
+                "google_id": b.google_id,
+                "title": b.title,
+                "authors": b.authors,
+                "publisher": b.publisher,
+                "published_date": b.published_date,
+                "thumbnail": b.thumbnail,
+                "categories": b.categories,
+                "description": b.description,
+                "available_copies": b.available_copies,
+                "created_by": b.created_by,
+            },
+        )
+        for b in books
+    ]
+    
 
 # ✅ pojedyncza książka
 @router.get("/{book_id}", response_model=schemas.book.BookOut)
@@ -630,6 +662,7 @@ def my_loans(
 ):
     loans = (
         db.query(models.book.Loan)
+        .options(joinedload(models.book.Loan.book)) 
         .filter_by(user_id=user.id)
         .order_by(models.book.Loan.start_date.desc())
         .all()

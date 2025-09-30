@@ -17,13 +17,13 @@ export type EventItem = {
   publisher_favicon?: string | null;
   registration_url?: string | null;
   organizer?: string | null;
+  my_state?: "going" | "interested" | null;
 };
 
 function fmtDateRange(start: string, end?: string | null, allDay?: boolean) {
   const s = new Date(start);
   let e = end ? new Date(end) : null;
 
-  // jeśli godzina = 00:00, traktujemy jak brak godziny → ustawiamy domyślnie 16:00–20:00
   if (!allDay && s.getHours() === 0 && s.getMinutes() === 0) {
     s.setHours(16, 0, 0, 0);
     e = new Date(s);
@@ -46,13 +46,22 @@ function fmtDateRange(start: string, end?: string | null, allDay?: boolean) {
   return `${d} • ${th}${eh ? "–" + eh : ""}`;
 }
 
-export default function EventCard({ ev }: { ev: EventItem }) {
+export default function EventCard({
+  ev,
+  readOnly = false,
+}: {
+  ev: EventItem;
+  readOnly?: boolean;
+}) {
   const [pending, setPending] = useState<"going" | "interested" | null>(null);
+  const [myState, setMyState] = useState<"going" | "interested" | null>(ev.my_state || null);
 
   const rsvp = async (state: "going" | "interested") => {
+    if (readOnly) return; // 🚫 tryb tylko-do-odczytu
     try {
       setPending(state);
       await api.post(`/events/${ev.id}/rsvp`, { state });
+      setMyState(state); // 🔄 od razu aktualizujemy stan lokalny
     } finally {
       setPending(null);
     }
@@ -90,19 +99,32 @@ export default function EventCard({ ev }: { ev: EventItem }) {
           <div className="mt-3 flex items-center gap-2">
             <button
               onClick={() => rsvp("going")}
-              className="inline-flex items-center gap-1 rounded-full bg-indigo-600 text-white px-3 py-1.5 text-sm disabled:opacity-60"
-              disabled={!!pending}
+              disabled={!!pending || readOnly}
+              className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-sm disabled:opacity-60
+                ${
+                  myState === "going"
+                    ? "bg-green-600 text-white"
+                    : "bg-white border border-slate-300 text-slate-700 hover:bg-slate-100"
+                }`}
               title="Wezmę udział"
             >
-              <CheckCircle2 size={16} /> Wezmę udział
+              <CheckCircle2 size={16} />{" "}
+              {myState === "going" ? "Bierzesz udział" : "Wezmę udział"}
             </button>
+
             <button
               onClick={() => rsvp("interested")}
-              className="inline-flex items-center gap-1 rounded-full bg-white border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-100 disabled:opacity-60"
-              disabled={!!pending}
+              disabled={!!pending || readOnly}
+              className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-sm disabled:opacity-60
+                ${
+                  myState === "interested"
+                    ? "bg-yellow-500 text-white"
+                    : "bg-white border border-slate-300 text-slate-700 hover:bg-slate-100"
+                }`}
               title="Zainteresowany"
             >
-              <Star size={16} /> Zainteresowany
+              <Star size={16} />{" "}
+              {myState === "interested" ? "Jesteś zainteresowany" : "Zainteresowany"}
             </button>
 
             {ev.registration_url && (

@@ -7,11 +7,13 @@ import ContactPage from "./pages/ContactPage";
 import EventsPage from "./pages/EventsPage";
 import ForumPage from "./pages/ForumPage";
 import BooksPage from "./pages/BooksPage";
-import RankingsPage from "./pages/RankingsPage";   // 🔥 NOWY IMPORT
+import RankingsPage from "./pages/RankingsPage";   
+import ProfilePage from "./pages/ProfilePage";
 import ProtectedRoute from "./components/router/ProtectedRoute";
 import { AuthProvider } from "./components/auth/AuthContext";
 
 import "./App.css";
+
 
 function App() {
   return (
@@ -61,10 +63,19 @@ function App() {
             }
           />
           <Route
-            path="/rankings"   // 🔥 NOWA TRASA
+            path="/rankings"  
             element={
               <ProtectedRoute>
                 <RankingsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <ProfilePage />
               </ProtectedRoute>
             }
           />

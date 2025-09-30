@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import TopNav from "../components/layout/TopNav";
 import UniversitySidebar from "../components/home/UniversitySidebar";
 import RankingList from "../components/rankings/RankingList";
@@ -15,6 +15,7 @@ export default function RankingsPage() {
   const [selected, setSelected] = useState<string>("wszystkie");
 
   const [loading, setLoading] = useState(false);
+  const [allBooks, setAllBooks] = useState<any[]>([]);
   const [books, setBooks] = useState<any[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
 
@@ -24,23 +25,18 @@ export default function RankingsPage() {
     minStars: 0,
     maxStars: 5,
     categories: ["Wszystkie"],
-    year: "",
+    year: null,
   });
 
-  // 🔹 pobieramy config z backendu
+  // 🔹 pobieramy config
   useEffect(() => {
     api
       .get<Config>("/meta/config")
-      .then((res) => {
-        setCfg(res.data);
-        if ((res.data as any).categories) {
-          setCategories((res.data as any).categories.sort());
-        }
-      })
+      .then((res) => setCfg(res.data))
       .catch(() => setCfg({ domain_to_uni: {}, university_faculties: {} }));
   }, []);
 
-  // 🔹 wyciągamy listę uczelni
+  // 🔹 lista uczelni
   const universities = useMemo(() => {
     if (!cfg) return [];
     return Object.keys(cfg.university_faculties).sort((a, b) =>
@@ -48,81 +44,112 @@ export default function RankingsPage() {
     );
   }, [cfg]);
 
-  // 🔹 pobieramy książki dla rankingów
-  useEffect(() => {
-    if (!cfg) return;
-    const ctrl = new AbortController();
-
-    const fetchBooks = async () => {
+  // 🔹 pobieramy książki (pełny zestaw)
+  const fetchBooks = useCallback(
+    async (ctrl?: AbortController) => {
+      if (!cfg) return;
       setLoading(true);
       try {
+        let fetched: any[] = [];
+
         if (selected === "wszystkie") {
-          // ✅ nowe: rankings/multi
-          const uniNames = universities.slice(0, 17); // limit jak w BooksPage
+          const uniNames = universities.slice(0, 17);
           const r = await api.get<Record<string, any[]>>("/rankings/multi", {
             params: {
               q: uniNames,
-              min_stars: filters.minStars,
-              max_stars: filters.maxStars,
-              sort_by: filters.sortBy,
-              order: filters.order,
-              categories:
-                filters.categories && !filters.categories.includes("Wszystkie")
-                  ? filters.categories
-                  : undefined,
-              year: filters.year || undefined,
-              limit_each: 200,
+              limit_each: 20,
             },
-            signal: ctrl.signal as any,
+            signal: ctrl?.signal as any,
           });
-          // scal do jednej tablicy
-          setBooks(Object.values(r.data).flat());
+          fetched = Object.values(r.data).flat();
         } else {
-          // 🔹 pojedyncza uczelnia
           const r = await api.get<any[]>("/rankings", {
             params: {
               uni: selected,
-              min_stars: filters.minStars,
-              max_stars: filters.maxStars,
-              sort_by: filters.sortBy,
-              order: filters.order,
-              categories:
-                filters.categories && !filters.categories.includes("Wszystkie")
-                  ? filters.categories
-                  : undefined,
-              year: filters.year || undefined,
-              limit: 200,
+              limit: 20,
             },
-            signal: ctrl.signal as any,
+            signal: ctrl?.signal as any,
           });
-          setBooks(r.data);
+          fetched = r.data;
         }
-      } catch (e) {
-        console.error("❌ Błąd pobierania rankingów", e);
-        setBooks([]);
+
+        setAllBooks(fetched);
+
+        // 🔹 kategorie tylko raz zbudowane z pełnych danych
+        const setCat = new Set<string>();
+        fetched.forEach((b) => {
+          if (b.categories) {
+            b.categories.split(",").forEach((c: string) => setCat.add(c.trim()));
+          }
+        });
+        setCategories(Array.from(setCat).sort());
+      } catch (e: any) {
+        if (e?.name !== "CanceledError") {
+          console.error("❌ Błąd pobierania rankingów", e);
+          setAllBooks([]);
+        }
       } finally {
         setLoading(false);
       }
-    };
+    },
+    [cfg, selected, universities]
+  );
 
-    fetchBooks();
-    return () => ctrl.abort();
-  }, [cfg, selected, universities, filters]);
-
-  // 🔹 aktualizacja kategorii na podstawie pobranych książek
+  // 🔹 fetch przy zmianie uczelni
   useEffect(() => {
-    if (!books.length) {
-      setCategories([]);
-      return;
+    const ctrl = new AbortController();
+    fetchBooks(ctrl);
+    return () => ctrl.abort();
+  }, [fetchBooks]);
+
+  // 🔹 filtracja robiona lokalnie na podstawie allBooks
+  useEffect(() => {
+    let filtered = [...allBooks];
+
+    // gwiazdki
+    filtered = filtered.filter(
+      (b) =>
+        (b.avg_rating ?? 0) >= filters.minStars &&
+        (b.avg_rating ?? 0) <= filters.maxStars
+    );
+
+    // kategorie
+    if (
+      filters.categories.length > 0 &&
+      !filters.categories.includes("Wszystkie")
+    ) {
+      filtered = filtered.filter((b) =>
+        filters.categories.some((cat) =>
+          b.categories?.toLowerCase().includes(cat.toLowerCase())
+        )
+      );
     }
-    const setCat = new Set<string>();
-    books.forEach((b) => {
-      if (b.categories) {
-        b.categories.split(",").forEach((c: string) => setCat.add(c.trim()));
-      }
-    });
-    setCategories(Array.from(setCat).sort());
-  }, [books]);
+
+    // rok
+    if (filters.year) {
+      filtered = filtered.filter((b) => {
+        const y = parseInt(b.published_date?.slice(0, 4));
+        return y === filters.year;
+      });
+    }
+
+    // sortowanie
+    if (filters.sortBy === "avg_rating") {
+      filtered.sort((a, b) =>
+        filters.order === "asc"
+          ? (a.avg_rating ?? 0) - (b.avg_rating ?? 0)
+          : (b.avg_rating ?? 0) - (a.avg_rating ?? 0)
+      );
+    } else if (filters.sortBy === "reviews_count") {
+      filtered.sort((a, b) =>
+        filters.order === "asc"
+          ? (a.reviews_count ?? 0) - (b.reviews_count ?? 0)
+          : (b.reviews_count ?? 0) - (a.reviews_count ?? 0)
+      );
+    }
+
+    setBooks(filtered);
+  }, [allBooks, filters]);
 
   return (
     <div className="h-screen overflow-hidden bg-slate-100 flex flex-col">

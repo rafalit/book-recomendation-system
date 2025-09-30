@@ -80,8 +80,10 @@ def list_events(
     date_from: Optional[str] = None,
     date_to: Optional[str] = None,
     db: Session = Depends(get_db),
+    current_user: Optional[models.User] = Depends(auth.get_current_user),
 ):
-    sel = select(Event).where(Event.status=="published")
+    sel = select(Event).where(Event.status == "published")
+
     if uni:
         sel = sel.where(Event.university_name == uni)
     if category:
@@ -99,14 +101,57 @@ def list_events(
             )
         )
     if date_from:
-        try: sel = sel.where(Event.start_at >= datetime.fromisoformat(date_from))
-        except Exception: pass
+        try:
+            sel = sel.where(Event.start_at >= datetime.fromisoformat(date_from))
+        except Exception:
+            pass
     if date_to:
-        try: sel = sel.where(Event.start_at <= datetime.fromisoformat(date_to))
-        except Exception: pass
+        try:
+            sel = sel.where(Event.start_at <= datetime.fromisoformat(date_to))
+        except Exception:
+            pass
 
     sel = sel.order_by(Event.start_at.desc(), Event.id.asc()).limit(200)
-    return db.execute(sel).scalars().all()
+    events = db.execute(sel).scalars().all()
+
+    # 🔹 mapowanie RSVP dla zalogowanego usera
+    state_map = {}
+    if current_user:
+        user_events = db.execute(
+            select(UserEvent).where(
+                UserEvent.user_id == current_user.id,
+                UserEvent.event_id.in_([e.id for e in events])
+            )
+        ).scalars().all()
+        state_map = {ue.event_id: ue.state for ue in user_events}
+
+    out = []
+    for ev in events:
+        ev.my_state = state_map.get(ev.id)
+        out.append(ev)
+
+    return out
+
+@router.get("/mine", response_model=list[EventOut])
+def my_events(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user),
+):
+    sel = (
+        select(Event, UserEvent.state)
+        .join(UserEvent, UserEvent.event_id == Event.id)
+        .where(UserEvent.user_id == current_user.id)
+        .where(Event.status == "published")
+        .order_by(Event.start_at.desc())
+    )
+    rows = db.execute(sel).all()
+
+    out = []
+    for ev, state in rows:
+        ev.my_state = state
+        out.append(ev)
+    return out
+
 
 @router.get("/{event_id}", response_model=EventDetail)
 def event_detail(event_id: int, db: Session = Depends(get_db)):

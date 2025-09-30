@@ -108,6 +108,7 @@ class LoanOut(LoanBase):
     book_id: int
     start_date: date
     returned_at: Optional[date]
+    book: BookOut
 
     class Config:
         orm_mode = True

@@ -228,36 +228,38 @@ export default function BookReviewModal({
         </h2>
 
         {/* formularz */}
-        <div className="border-b pb-4 mb-4">
-          <div className="flex gap-1 mb-2">{renderStars()}</div>
-          <textarea
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder="Twoja recenzja..."
-            rows={3}
-            className="w-full border border-slate-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-indigo-200 outline-none"
-          />
-          <div className="mt-3 flex justify-end gap-2">
-            {editingId && (
+        {!readOnly && (
+          <div className="border-b pb-4 mb-4">
+            <div className="flex gap-1 mb-2">{renderStars()}</div>
+            <textarea
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              placeholder="Twoja recenzja..."
+              rows={3}
+              className="w-full border border-slate-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-indigo-200 outline-none"
+            />
+            <div className="mt-3 flex justify-end gap-2">
+              {editingId && (
+                <button
+                  onClick={() => {
+                    setEditingId(null);
+                    setText("");
+                    setRating(0);
+                  }}
+                  className="px-4 py-2 border rounded-lg text-slate-600 hover:bg-slate-100"
+                >
+                  Anuluj edycję
+                </button>
+              )}
               <button
-                onClick={() => {
-                  setEditingId(null);
-                  setText("");
-                  setRating(0);
-                }}
-                className="px-4 py-2 border rounded-lg text-slate-600 hover:bg-slate-100"
+                onClick={handleSubmit}
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg"
               >
-                Anuluj edycję
+                {editingId ? "Zapisz zmiany" : "Dodaj recenzję"}
               </button>
-            )}
-            <button
-              onClick={handleSubmit}
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg"
-            >
-              {editingId ? "Zapisz zmiany" : "Dodaj recenzję"}
-            </button>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* lista recenzji */}
         <div className="flex-1 overflow-y-auto">
@@ -275,7 +277,8 @@ export default function BookReviewModal({
                       <RoleBadge user={r.user} />
                     </span>
                     <div className="flex items-center gap-2">
-                      {r.user?.id === currentUserId ? (
+                      {!readOnly && (
+                      r.user?.id === currentUserId ? (
                         <>
                           <button
                             onClick={() => {
@@ -322,7 +325,7 @@ export default function BookReviewModal({
                             <Flag size={16} />
                           </button>
                         </>
-                      )}
+                      ))}
                     </div>
                   </div>
 

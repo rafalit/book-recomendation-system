@@ -34,8 +34,8 @@ export default function RankingList({ items, loading }: Props) {
 
   return (
     <div className="grid gap-4 p-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 overflow-y-auto">
-      {items.map((b) => (
-        <RankingCard key={b.id} book={b} />
+      {items.map((b, i) => (
+        <RankingCard key={`${b.id}-${i}`} book={b} />
       ))}
     </div>
   );

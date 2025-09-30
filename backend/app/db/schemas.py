@@ -68,6 +68,7 @@ class EventOut(BaseModel):
     publisher_favicon: str | None = None
     registration_url: str | None = None
     organizer: str | None = None
+    my_state: Optional[str] = None   # "going" | "interested" | None
 
     model_config = {"from_attributes": True}
 

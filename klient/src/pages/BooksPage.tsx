@@ -61,13 +61,13 @@ export default function BooksPage() {
         if (selected === "wszystkie") {
           const uniNames = universities.slice(0, 17);
           const r = await api.get<Record<string, Book[]>>("/books/multi", {
-            params: { q: uniNames, limit_each: 200 },
+            params: { q: uniNames, limit_each: 20 },
             signal: ctrl?.signal as any,
           });
           fetched = Object.values(r.data).flat();
         } else {
-          const r = await api.get<Book[]>("/books", {
-            params: { q: selected, max_results: 200 },
+          const r = await api.get<Book[]>("/books/", {
+            params: { q: selected, max_results: 20 },
             signal: ctrl?.signal as any,
           });
           fetched = r.data;

@@ -18,7 +18,7 @@ def list_rankings(
     max_stars: float = Query(5, ge=0, le=5),
     sort_by: str = Query("avg_rating", regex="^(|avg_rating|reviews_count)$"),
     order: str = Query("desc", regex="^(asc|desc)$"),
-    limit: int = Query(100, le=500),
+    limit: int = Query(20, le=100),
     year: Optional[int] = None,
     categories: Optional[List[str]] = Query(None),
 ):
@@ -109,6 +109,7 @@ def rankings_multi(
     categories: Optional[List[str]] = Query(None),
 ):
     results: Dict[str, List[schemas.book.BookOut]] = {}
+    seen_global = set()  # 🔹 globalny set dla wszystkich uczelni
 
     for uni in q:
         # 🔹 lokalne
@@ -128,30 +129,41 @@ def rankings_multi(
         ]
         enriched_cached = [_enrich_with_ratings(db, b) for b in persisted]
 
+        # 🔹 scal lokalne i z Google
         books = local_books + enriched_cached
+
+        # 🔹 deduplikacja globalna
+        deduped = []
+        for b in books:
+            key = b.get("google_id") or b.get("isbn") or b.get("title")
+            if key in seen_global:
+                continue
+            seen_global.add(key)
+            deduped.append(b)
 
         # 🔹 filtry
         if year:
-            books = [b for b in books if (b.get("published_date") or "").startswith(str(year))]
+            deduped = [b for b in deduped if (b.get("published_date") or "").startswith(str(year))]
         if categories and "Wszystkie" not in categories:
-            books = [
-                b for b in books
+            deduped = [
+                b for b in deduped
                 if any(c.lower() in (b.get("categories") or "").lower() for c in categories)
             ]
-        books = [
-            b for b in books
+        deduped = [
+            b for b in deduped
             if min_stars <= (b.get("avg_rating") or 0) <= max_stars
         ]
 
         # 🔹 sortowanie
         reverse = order == "desc"
         if sort_by == "avg_rating":
-            books.sort(key=lambda b: b.get("avg_rating") or 0, reverse=reverse)
+            deduped.sort(key=lambda b: b.get("avg_rating") or 0, reverse=reverse)
         elif sort_by == "reviews_count":
-            books.sort(key=lambda b: b.get("reviews_count") or 0, reverse=reverse)
+            deduped.sort(key=lambda b: b.get("reviews_count") or 0, reverse=reverse)
         else:
-            books.sort(key=lambda b: b.get("title") or "", reverse=reverse)
+            deduped.sort(key=lambda b: b.get("title") or "", reverse=reverse)
 
-        results[uni] = [schemas.book.BookOut(**b) for b in books[:limit_each]]
+        # 🔹 limit + wrzucenie do results
+        results[uni] = [schemas.book.BookOut(**b) for b in deduped[:limit_each]]
 
     return results

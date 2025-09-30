@@ -11,11 +11,11 @@ export type Loan = {
 };
 
 export async function fetchMyLoans(): Promise<Loan[]> {
-  const r = await api.get<Loan[]>("/books/loans/me");
+  const r = await api.get<Loan[]>("/books/loans/me/");
   return r.data;
 }
 
 export async function fetchMyActiveLoans(): Promise<Loan[]> {
-  const r = await api.get<Loan[]>("/books/loans/active");
+  const r = await api.get<Loan[]>("/books/loans/active/");
   return r.data;
 }
