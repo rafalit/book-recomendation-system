@@ -159,11 +159,11 @@ export default function NewsCard({
       href={link}
       target="_blank"
       rel="noreferrer"
-      className="block rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:shadow-sm transition"
+      className="block rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 hover:shadow-sm transition"
     >
       <div className="p-4 grid grid-cols-[1fr,160px] gap-4 items-start">
         <div>
-          <div className="flex items-center gap-2 text-xs text-slate-600">
+          <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
             {faviconSrc ? (
               <img
                 src={faviconSrc}
@@ -174,23 +174,23 @@ export default function NewsCard({
                 onError={handleFaviconError}
               />
             ) : (
-              <Globe size={14} className="text-slate-500" />
+              <Globe size={14} className="text-slate-500 dark:text-slate-400" />
             )}
             <span className="truncate">{pub.label}</span>
-            {date && <span className="text-slate-400">• {timeAgo(date)}</span>}
+            {date && <span className="text-slate-400 dark:text-slate-500">• {timeAgo(date)}</span>}
           </div>
 
-          <h3 className="mt-1 text-[18px] leading-snug font-semibold text-slate-900">
+          <h3 className="mt-1 text-[18px] leading-snug font-semibold text-slate-900 dark:text-slate-100">
             {title}
           </h3>
-          {preview && <p className="mt-1 text-sm text-slate-600">{preview}</p>}
+          {preview && <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{preview}</p>}
         </div>
 
         {(thumbSrc || thumbnail) && (
           <img
             src={thumbSrc || THUMB_PLACEHOLDER}
             alt=""
-            className="w-40 h-28 object-cover rounded-md border border-slate-200"
+            className="w-40 h-28 object-cover rounded-md border border-slate-200 dark:border-slate-600"
             loading="lazy"
             referrerPolicy="no-referrer"
             onError={handleThumbError}

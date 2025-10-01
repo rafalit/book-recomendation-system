@@ -121,9 +121,9 @@ export default function ContactPage() {
   }, [selected]);
 
   return (
-    <div className="h-screen overflow-hidden bg-slate-100 flex flex-col">
+    <div className="h-screen overflow-hidden bg-slate-100 dark:bg-slate-900 flex flex-col">
       <TopNav />
-      <div className="mx-auto max-w-[2000px] px-2 py-4 w-full h-[calc(100vh-80px)]
+      <div className="px-2 py-4 w-full h-[calc(100vh-80px)]
                       grid grid-cols-1 md:grid-cols-[400px,1fr] gap-4 overflow-hidden">
         <div className="h-full overflow-hidden">
           <UniversitySidebar
@@ -132,15 +132,15 @@ export default function ContactPage() {
             onSelect={setSelected}
           />
         </div>
-        <section className="bg-white rounded-2xl shadow-sm border border-slate-200 h-full overflow-y-auto p-4">
+        <section className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-600 h-full overflow-y-auto p-4">
           {selected === "wszystkie" ? (
-            <div className="text-slate-600">Wybierz uczelnię z lewej, aby zobaczyć dane kontaktowe.</div>
+            <div className="text-slate-600 dark:text-slate-400">Wybierz uczelnię z lewej, aby zobaczyć dane kontaktowe.</div>
           ) : loading ? (
-            <div className="text-slate-600">Ładowanie…</div>
+            <div className="text-slate-600 dark:text-slate-400">Ładowanie…</div>
           ) : contact ? (
             <ContactCard data={contact} />
           ) : (
-            <div className="text-slate-600">Brak danych kontaktowych.</div>
+            <div className="text-slate-600 dark:text-slate-400">Brak danych kontaktowych.</div>
           )}
         </section>
       </div>

@@ -158,7 +158,11 @@ export default function RegisterPage() {
           <TextField
             leftIcon={<Mail size={18} />}
             type="email"
-            placeholder="np. jan.kowalski@agh.edu.pl"
+            placeholder={
+              role === "student"
+                ? "np. jan.kowalski@agh.edu.pl"
+                : "np. jan.kowalski@agh.pl"
+            }
             value={email}
             onChange={(e) => setEmail(e.target.value.toLowerCase())}
             required

@@ -4,20 +4,20 @@ export type NewsItem = NewsCardProps;
 
 function SkeletonCard() {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 animate-pulse">
-      <div className="h-3 w-32 bg-slate-200 rounded mb-2" />
-      <div className="h-5 w-3/4 bg-slate-200 rounded mb-2" />
-      <div className="h-3 w-2/3 bg-slate-200 rounded" />
+    <div className="rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 p-4 animate-pulse">
+      <div className="h-3 w-32 bg-slate-200 dark:bg-slate-700 rounded mb-2" />
+      <div className="h-5 w-3/4 bg-slate-200 dark:bg-slate-700 rounded mb-2" />
+      <div className="h-3 w-2/3 bg-slate-200 dark:bg-slate-700 rounded" />
     </div>
   );
 }
 
 function EmptyState() {
   return (
-    <div className="mx-auto max-w-[700px] bg-white rounded-2xl border border-slate-200 shadow-sm p-10 text-center">
+    <div className="mx-auto max-w-[700px] bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-600 shadow-sm p-10 text-center">
       <div className="text-6xl mb-4">📖</div>
-      <h3 className="text-xl font-semibold text-slate-800 mb-1">Brak aktualności</h3>
-      <p className="text-slate-600">
+      <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-100 mb-1">Brak aktualności</h3>
+      <p className="text-slate-600 dark:text-slate-300">
         Nie znaleziono żadnych artykułów dla wybranych filtrów.
         <br />Spróbuj zmienić kryteria wyszukiwania.
       </p>

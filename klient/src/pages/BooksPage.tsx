@@ -29,11 +29,48 @@ export default function BooksPage() {
     query: "",
     sortBy: "newest",
     availableOnly: false,
+    favoritesOnly: false,
     categories: ["Wszystkie"], // ✅ domyślnie wszystkie
   });
 
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   const { loans, refresh } = useMyLoans();
+
+  // ⭐ ulubione (localStorage)
+  const [favoriteIds, setFavoriteIds] = useState<number[]>(() => {
+    try {
+      const raw = localStorage.getItem("favoriteBookIds");
+      return raw ? (JSON.parse(raw) as number[]) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const toggleFavorite = (bookId: number) => {
+    setFavoriteIds((prev) => {
+      const exists = prev.includes(bookId);
+      const next = exists ? prev.filter((id) => id !== bookId) : [...prev, bookId];
+      try {
+        localStorage.setItem("favoriteBookIds", JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+  };
+
+  // 🎯 rekomendacje
+  const [recommendedIds, setRecommendedIds] = useState<Set<number>>(new Set());
+
+  useEffect(() => {
+    // pobierz rekomendacje dla zalogowanego użytkownika
+    (async () => {
+      try {
+        const r = await api.get<Book[]>("/books/recommend", { params: { limit: 50 } });
+        setRecommendedIds(new Set(r.data.map((b) => b.id)));
+      } catch (_) {
+        setRecommendedIds(new Set());
+      }
+    })();
+  }, []);
 
   // pobranie configu
   useEffect(() => {
@@ -114,6 +151,11 @@ export default function BooksPage() {
         return (b.available_copies ?? 0) > 0 && !loaned;
       });
     }
+
+    // ⭐ tylko ulubione
+    if (filters.favoritesOnly) {
+      filtered = filtered.filter((b) => favoriteIds.includes(b.id));
+    }
     if (
       filters.categories.length > 0 &&
       !filters.categories.includes("Wszystkie")
@@ -140,13 +182,23 @@ export default function BooksPage() {
       );
     }
 
+    // 🎯 ułóż rekomendowane na górze (zachowaj kolejność wewnątrz grup)
+    if (recommendedIds.size > 0) {
+      const recos: Book[] = [];
+      const others: Book[] = [];
+      for (const b of filtered) {
+        (recommendedIds.has(b.id) ? recos : others).push(b);
+      }
+      filtered = [...recos, ...others];
+    }
+
     setBooks(filtered);
-  }, [allBooks, filters, loans]);
+  }, [allBooks, filters, loans, favoriteIds, recommendedIds]);
 
   return (
-    <div className="h-screen overflow-hidden bg-slate-100 flex flex-col">
+    <div className="h-screen overflow-hidden bg-slate-100 dark:bg-slate-900 flex flex-col">
       <TopNav />
-      <div className="mx-auto max-w-[2000px] px-2 py-4 w-full h-[calc(100vh-80px)] grid grid-cols-1 md:grid-cols-[400px,1fr] gap-4 overflow-hidden">
+      <div className="px-2 py-4 w-full h-[calc(100vh-80px)] grid grid-cols-1 md:grid-cols-[400px,1fr] gap-4 overflow-hidden">
         {/* sidebar uczelni */}
         <div className="h-full overflow-hidden bg-blue-600 text-white rounded-2xl">
           <UniversitySidebar
@@ -157,7 +209,7 @@ export default function BooksPage() {
         </div>
 
         {/* prawa kolumna */}
-        <section className="bg-white rounded-2xl shadow-sm border border-slate-200 h-full flex flex-col overflow-hidden">
+        <section className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-600 h-full flex flex-col overflow-hidden">
           <div className="p-4 border-b flex items-center justify-between">
             <BookFilters
               value={filters}
@@ -184,6 +236,8 @@ export default function BooksPage() {
               user={user}
               loans={loans}
               refreshLoans={refresh}
+              favorites={new Set(favoriteIds)}
+              onToggleFavorite={toggleFavorite}
               onDeleted={(id) =>
                 setBooks((prev) => prev.filter((b) => b.id !== id))
               }

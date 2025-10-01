@@ -291,6 +291,7 @@ def list_posts(
                 "first_name": p.author.first_name,
                 "last_name": p.author.last_name,
                 "role": p.author.role,
+                "academic_title": p.author.academic_title,
                 "university": p.author.university,
             },
             "reactions": reactions,

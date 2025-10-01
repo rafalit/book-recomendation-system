@@ -68,7 +68,9 @@ function Reply({
   onReload: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const [val, setVal] = useState("");
+  const hasChildren = (node.children && node.children.length > 0) || false;
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,42 +93,56 @@ function Reply({
       </div>
       <div className="mt-1 whitespace-pre-wrap break-words">{node.body}</div>
 
-      <div className="mt-2">
-        {!open ? (
+      <div className="mt-2 flex items-center gap-2">
+        <button
+          onClick={() => setOpen(true)}
+          className="text-xs px-2 py-1 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200"
+        >
+          Odpowiedz
+        </button>
+        {hasChildren && (
           <button
-            onClick={() => setOpen(true)}
-            className="text-xs px-2 py-1 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200"
+            onClick={() => setExpanded((e) => !e)}
+            className="text-xs px-2 py-1 rounded-lg bg-slate-100 text-slate-700 border border-slate-200"
           >
-            Odpowiedz
+            {expanded ? `Zwiń odpowiedzi (${node.children?.length || 0})` : `Pokaż odpowiedzi (${node.children?.length || 0})`}
           </button>
-        ) : (
-          <form onSubmit={submit} className="mt-2 flex gap-2">
-            <input
-              value={val}
-              onChange={(e) => setVal(e.target.value)}
-              className="flex-1 border rounded-xl px-3 py-2"
-              placeholder="Twoja odpowiedź…"
-            />
-            <button className="px-3 rounded-xl bg-indigo-700 text-white">Wyślij</button>
-            <button
-              type="button"
-              onClick={() => {
-                setOpen(false);
-                setVal("");
-              }}
-              className="px-3 rounded-xl bg-slate-100"
-            >
-              Anuluj
-            </button>
-          </form>
         )}
       </div>
 
-      {node.children && node.children.length > 0 && (
+      {(hasChildren || open) && (
         <div className="mt-3 space-y-2 pl-4 border-l">
-          {node.children.map((ch) => (
-            <Reply key={ch.id} node={ch} postId={postId} onReload={onReload} />
-          ))}
+          {hasChildren && expanded && (
+            <div className="space-y-2">
+              {[...node.children!]
+                .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+                .map((ch) => (
+                  <Reply key={ch.id} node={ch} postId={postId} onReload={onReload} />
+                ))}
+            </div>
+          )}
+
+          {open && (
+            <form onSubmit={submit} className="flex gap-2">
+              <input
+                value={val}
+                onChange={(e) => setVal(e.target.value)}
+                className="flex-1 border rounded-xl px-3 py-2"
+                placeholder="Twoja odpowiedź…"
+              />
+              <button className="px-3 rounded-xl bg-indigo-700 text-white">Wyślij</button>
+              <button
+                type="button"
+                onClick={() => {
+                  setOpen(false);
+                  setVal("");
+                }}
+                className="px-3 rounded-xl bg-slate-100"
+              >
+                Anuluj
+              </button>
+            </form>
+          )}
         </div>
       )}
     </div>

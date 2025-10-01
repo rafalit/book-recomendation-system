@@ -40,7 +40,7 @@ export default function ReactionBar({
           key={r.key}
           disabled={busy}
           onClick={() => handleReact(r.key)}
-          className="px-3 py-1.5 rounded-full bg-white/60 text-indigo-700 hover:bg-white shadow-sm text-sm"
+          className="px-3 py-1.5 rounded-full bg-white/60 dark:bg-slate-700/60 text-indigo-700 dark:text-indigo-300 hover:bg-white dark:hover:bg-slate-600 shadow-sm text-sm"
           title={r.label}
         >
           <span className="mr-1">{r.emoji}</span>

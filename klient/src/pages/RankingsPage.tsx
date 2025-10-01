@@ -146,16 +146,24 @@ export default function RankingsPage() {
           ? (a.reviews_count ?? 0) - (b.reviews_count ?? 0)
           : (b.reviews_count ?? 0) - (a.reviews_count ?? 0)
       );
+    } else {
+      // Alfabetycznie po tytule
+      filtered.sort((a, b) => {
+        const at = a.title || "";
+        const bt = b.title || "";
+        const cmp = at.localeCompare(bt, "pl", { sensitivity: "base" });
+        return filters.order === "asc" ? cmp : -cmp;
+      });
     }
 
     setBooks(filtered);
   }, [allBooks, filters]);
 
   return (
-    <div className="h-screen overflow-hidden bg-slate-100 flex flex-col">
+    <div className="h-screen overflow-hidden bg-slate-100 dark:bg-slate-900 flex flex-col">
       <TopNav />
       <div
-        className="mx-auto max-w-[2000px] px-2 py-4 w-full
+        className="px-2 py-4 w-full
              h-[calc(100vh-80px)] grid grid-cols-1 md:grid-cols-[400px,1fr] gap-4 overflow-hidden"
       >
         {/* 🔹 sidebar uczelni */}
@@ -168,7 +176,7 @@ export default function RankingsPage() {
         </div>
 
         {/* 🔹 prawa kolumna */}
-        <section className="bg-white rounded-2xl shadow-sm border border-slate-200 h-full flex flex-col overflow-hidden">
+        <section className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-600 h-full flex flex-col overflow-hidden">
           <div className="p-4 border-b flex items-center justify-between">
             <RankingFilters
               value={filters}

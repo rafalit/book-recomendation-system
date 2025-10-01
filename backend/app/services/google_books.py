@@ -20,10 +20,10 @@ def search_google_books(query: str, max_results: int = 40) -> List[Dict[str, Any
         if GOOGLE_BOOKS_API_KEY:
             params["key"] = GOOGLE_BOOKS_API_KEY
 
-        r = requests.get(GOOGLE_BOOKS_API, params=params)
+        r = requests.get(GOOGLE_BOOKS_API, params=params, timeout=4)
         if r.status_code == 429:
             # limit – spróbuj poczekać i ponowić
-            time.sleep(1)
+            time.sleep(0.3)
             continue
         r.raise_for_status()
 
@@ -55,7 +55,7 @@ def search_google_books(query: str, max_results: int = 40) -> List[Dict[str, Any
             })
 
         start += 40
-        time.sleep(0.1)  # lekkie opóźnienie żeby nie triggerować 429
+        time.sleep(0.05)  # lekkie opóźnienie żeby nie triggerować 429
 
     return results[:max_results]
 

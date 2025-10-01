@@ -93,9 +93,9 @@ export default function EventsPage() {
   }, [raw]);
 
   return (
-    <div className="h-screen overflow-hidden bg-slate-100 flex flex-col">
+    <div className="h-screen overflow-hidden bg-slate-100 dark:bg-slate-900 flex flex-col">
       <TopNav />
-      <div className="mx-auto max-w-[2000px] px-2 py-4 w-full h-[calc(100vh-80px)]
+      <div className="px-2 py-4 w-full h-[calc(100vh-80px)]
                       grid grid-cols-1 md:grid-cols-[400px,1fr] gap-4 overflow-hidden">
         <div className="h-full overflow-hidden">
           <UniversitySidebar
@@ -105,7 +105,7 @@ export default function EventsPage() {
           />
         </div>
 
-        <section className="bg-white rounded-2xl shadow-sm border border-slate-200 h-full flex flex-col overflow-hidden">
+        <section className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-600 h-full flex flex-col overflow-hidden">
           <div className="p-4 border-b shrink-0">
             <EventFilters
               categories={categories}
@@ -118,12 +118,12 @@ export default function EventsPage() {
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
             {loading ? (
               Array.from({length:6}).map((_,i)=>
-                <div key={i} className="h-20 rounded-xl border border-slate-200 bg-white animate-pulse" />
+                <div key={i} className="h-20 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 animate-pulse" />
               )
             ) : raw.length ? (
               raw.map(e => <EventCard key={e.id} ev={e} />)
             ) : (
-              <div className="text-slate-600">Brak wydarzeń dla wybranych filtrów.</div>
+              <div className="text-slate-600 dark:text-slate-300">Brak wydarzeń dla wybranych filtrów.</div>
             )}
           </div>
         </section>

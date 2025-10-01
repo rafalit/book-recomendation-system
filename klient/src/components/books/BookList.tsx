@@ -9,6 +9,8 @@ type Props = {
   onDeleted?: (id: number) => void;
   loans?: Loan[];             
   refreshLoans?: () => void;   
+  favorites?: Set<number>;
+  onToggleFavorite?: (bookId: number) => void;
 };
 
 export default function BookList({
@@ -19,6 +21,8 @@ export default function BookList({
   onDeleted,
   loans = [],
   refreshLoans,
+  favorites,
+  onToggleFavorite,
 }: Props) {
   if (loading) {
     return (
@@ -56,6 +60,8 @@ export default function BookList({
           loan={loans.find((l) => l.book_id === b.id)}  // 🔹 przekazujemy całe wypożyczenie
           refreshLoans={refreshLoans}
           onDeleted={onDeleted}
+          isFavorite={favorites?.has(b.id)}
+          onToggleFavorite={onToggleFavorite}
         />
       ))}
     </div>

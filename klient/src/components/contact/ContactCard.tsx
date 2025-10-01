@@ -47,8 +47,8 @@ function ChipLink({
       target="_blank"
       rel="noreferrer"
       title={title}
-      className="inline-flex items-center gap-1.5 rounded-full bg-white/80 hover:bg-white px-3 py-1.5 text-sm
-                 text-indigo-700 ring-1 ring-inset ring-indigo-200 transition-colors"
+      className="inline-flex items-center gap-1.5 rounded-full bg-white/80 hover:bg-white dark:bg-slate-700 dark:hover:bg-slate-600 px-3 py-1.5 text-sm
+                 text-indigo-700 dark:text-indigo-300 ring-1 ring-inset ring-indigo-200 dark:ring-slate-600 transition-colors"
     >
       {icon} {children}
     </a>
@@ -69,7 +69,7 @@ function CopyBtn({ text, aria }: { text: string; aria?: string }) {
         } catch {}
       }}
       className="ml-1 inline-flex items-center gap-1 rounded-full px-2 py-1 text-[12px] font-medium
-                 text-slate-600 hover:text-slate-900 hover:bg-slate-100 focus:outline-none
+                 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-600 focus:outline-none
                  focus-visible:ring-2 focus-visible:ring-indigo-300"
     >
       {ok ? <Check size={14} className="text-emerald-600" /> : <Copy size={14} />}
@@ -90,10 +90,10 @@ function InfoRow({ type, value, label }:{
 
   const content = (
     <div className="flex items-center gap-2 min-w-0">
-      <Icon size={18} className="text-indigo-600 shrink-0" />
+      <Icon size={18} className="text-indigo-600 dark:text-indigo-400 shrink-0" />
       <div className="min-w-0">
-        {label && <span className="font-medium text-slate-900 mr-1">{label}:</span>}
-        <span className="text-slate-800 break-words">{value}</span>
+        {label && <span className="font-medium text-slate-900 dark:text-slate-100 mr-1">{label}:</span>}
+        <span className="text-slate-800 dark:text-slate-200 break-words">{value}</span>
       </div>
       <CopyBtn text={value} aria={`Skopiuj ${label || value}`} />
     </div>
@@ -106,7 +106,7 @@ function InfoRow({ type, value, label }:{
           href={href}
           target={type === "url" ? "_blank" : undefined}
           rel="noreferrer"
-          className="block rounded-xl px-2 py-2 -mx-2 transition-colors group-hover:bg-slate-50/80
+          className="block rounded-xl px-2 py-2 -mx-2 transition-colors group-hover:bg-slate-50/80 dark:group-hover:bg-slate-700/50
                      focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300"
         >
           {content}
@@ -125,12 +125,12 @@ function Card({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-40px" }}
       transition={{ duration: 0.35, ease: "easeOut" }}
-      className="overflow-hidden rounded-2xl bg-white/70 backdrop-blur supports-[backdrop-filter]:bg-white/60
-                 border border-white/60 shadow-[0_8px_30px_-15px_rgba(15,23,42,0.25)]"
+      className="overflow-hidden rounded-2xl bg-white/70 dark:bg-slate-800/90 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:supports-[backdrop-filter]:bg-slate-800/80
+                 border border-white/60 dark:border-slate-600 shadow-[0_8px_30px_-15px_rgba(15,23,42,0.25)] dark:shadow-[0_8px_30px_-15px_rgba(0,0,0,0.3)]"
     >
-      <div className="p-5 border-b border-slate-200/70 flex items-start justify-between gap-3">
+      <div className="p-5 border-b border-slate-200/70 dark:border-slate-600/70 flex items-start justify-between gap-3">
         {/* POWIĘKSZONE NAGŁÓWKI KAFELKÓW */}
-        <h3 className="text-[20px] md:text-[21px] font-semibold tracking-tight text-slate-900">
+        <h3 className="text-[20px] md:text-[21px] font-semibold tracking-tight text-slate-900 dark:text-slate-100">
           {title}
         </h3>
         {right}
@@ -157,8 +157,8 @@ export default function ContactCard({ data }: { data: ContactData }) {
       </div>
 
       {/* HERO */}
-      <div className="overflow-hidden rounded-[28px] border border-white/60 bg-white/70 backdrop-blur supports-[backdrop-filter]:bg-white/55
-                      shadow-[0_12px_40px_-16px_rgba(15,23,42,0.25)] mb-6">
+      <div className="overflow-hidden rounded-[28px] border border-white/60 dark:border-slate-600 bg-white/70 dark:bg-slate-800/90 backdrop-blur supports-[backdrop-filter]:bg-white/55 dark:supports-[backdrop-filter]:bg-slate-800/80
+                      shadow-[0_12px_40px_-16px_rgba(15,23,42,0.25)] dark:shadow-[0_12px_40px_-16px_rgba(0,0,0,0.3)] mb-6">
         <div className="relative p-6">
           <div className="flex flex-wrap items-center justify-between gap-6">
             {/* lewa: DUŻE LOGO + tytuł */}
@@ -167,16 +167,16 @@ export default function ContactCard({ data }: { data: ContactData }) {
                 <img
                   src={header.logoUrl}
                   alt=""
-                  className="h-16 w-16 md:h-20 md:w-20 rounded-xl object-contain bg-white/60 p-1 ring-1 ring-slate-200 shrink-0"
+                  className="h-16 w-16 md:h-20 md:w-20 rounded-xl object-contain bg-white/60 dark:bg-slate-700/60 p-1 ring-1 ring-slate-200 dark:ring-slate-600 shrink-0"
                 />
               )}
               <div className="min-w-0">
                 {/* POWIĘKSZONY TYTUŁ */}
-                <div className="truncate text-[24px] md:text-[26px] font-extrabold tracking-tight text-slate-900">
+                <div className="truncate text-[24px] md:text-[26px] font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
                   {header.title || "Kontakt"}
                 </div>
                 {header.hours && (
-                  <div className="text-[14px] text-slate-600">
+                  <div className="text-[14px] text-slate-600 dark:text-slate-400">
                     {header.hours.replace("pn–pt", "poniedziałek – piątek").replace("pn-pt", "poniedziałek – piątek")}
                   </div>
                 )}
@@ -193,8 +193,8 @@ export default function ContactCard({ data }: { data: ContactData }) {
                     target="_blank"
                     rel="noreferrer"
                     title={name}
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/90
-                               ring-1 ring-slate-200 text-slate-600 hover:bg-white hover:text-slate-900 transition-colors"
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/90 dark:bg-slate-700/90
+                               ring-1 ring-slate-200 dark:ring-slate-600 text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-600 hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
                   >
                     <SocialIcon name={name} />
                   </a>
@@ -220,7 +220,7 @@ export default function ContactCard({ data }: { data: ContactData }) {
               ) : null
             }
           >
-            <div className="text-[16px] text-slate-700 leading-relaxed min-w-0 break-words">
+            <div className="text-[16px] text-slate-700 dark:text-slate-300 leading-relaxed min-w-0 break-words">
               {data.address.lines.map((l, i) => <div key={i}>{l}</div>)}
             </div>
           </Card>
@@ -257,8 +257,8 @@ export default function ContactCard({ data }: { data: ContactData }) {
             key={s.title}
             title={s.title}
             right={s.subtitle ? (
-              <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 text-indigo-700 text-xs
-                               px-2.5 py-1 ring-1 ring-inset ring-indigo-200">
+              <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 text-xs
+                               px-2.5 py-1 ring-1 ring-inset ring-indigo-200 dark:ring-indigo-600">
                 {s.subtitle}
               </span>
             ) : undefined}

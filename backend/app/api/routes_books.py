@@ -334,18 +334,18 @@ def books_multi(
 
         cached = get_cached_books(db, uni)
         if cached:
-            persisted = [
-                _persist_book(db, b)
-                for b in cached
-                if b.get("thumbnail") and b.get("authors")
-            ]
+            # ograniczaj pracę przed persystencją i enrich
+            limited_cached = [
+                b for b in cached if b.get("thumbnail") and b.get("authors")
+            ][:limit_each]
+
+            persisted = [_persist_book(db, b) for b in limited_cached]
             deduped = []
             for b in persisted:
                 key = b.get("google_id") or b.get("isbn") or b.get("title")
                 if key in seen_global:
                     continue
                 seen_global.add(key)
-                b = _enrich_with_ratings(db, b)
                 deduped.append(b)
 
             # 🔎 filtry + sortowanie
@@ -357,20 +357,30 @@ def books_multi(
 
             results[uni] = (
                 [BookOut(**b) for b in local_books_out]
-                + [BookOut(**b) for b in deduped[:limit_each]]
+                + [BookOut(**_enrich_with_ratings(db, b)) for b in deduped[:limit_each]]
             )
             continue
 
         # 🔹 Google Books bez cache
         queries = UNI_BOOK_QUERIES.get(uni, [uni])
         all_books = []
-        for search_q in queries:
-            try:
-                books = search_google_books(search_q, max_results=40)
-                books = [b for b in books if b.get("thumbnail") and b.get("authors")]
-                all_books.extend(books)
-            except Exception as e:
-                print(f"❌ Błąd pobierania książek dla frazy '{search_q}': {e}")
+        # pobierz równolegle i nie pobieraj nadmiarowo
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+        with ThreadPoolExecutor(max_workers=min(8, len(queries))) as ex:
+            futures = {
+                ex.submit(search_google_books, search_q, max_results=limit_each): search_q
+                for search_q in queries
+            }
+            for fut in as_completed(futures):
+                try:
+                    books = fut.result()
+                    books = [b for b in books if b.get("thumbnail") and b.get("authors")]
+                    all_books.extend(books)
+                    if len(all_books) >= limit_each * 2:
+                        # wystarczająco wyników, przerwij dalsze czekanie
+                        break
+                except Exception as e:
+                    print(f"❌ Błąd pobierania książek dla frazy '{futures[fut]}': {e}")
 
         seen_local = set()
         unique_books = []
@@ -380,8 +390,6 @@ def books_multi(
                 continue
             seen_local.add(key)
             seen_global.add(key)
-            b = _persist_book(db, b)
-            b = _enrich_with_ratings(db, b)
             unique_books.append(b)
 
         # 🔎 filtry + sortowanie
@@ -392,6 +400,9 @@ def books_multi(
             unique_books.sort(key=lambda b: b.get("published_date") or "2100")
 
         limited_books = unique_books[:limit_each]
+        # dopiero teraz zapisz do DB i wzbogac
+        limited_books = [_persist_book(db, b) for b in limited_books]
+        limited_books = [_enrich_with_ratings(db, b) for b in limited_books]
         set_cached_books(db, uni, limited_books)
 
         results[uni] = (

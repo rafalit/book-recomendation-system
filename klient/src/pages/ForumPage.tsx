@@ -73,6 +73,7 @@ export default function ForumPage() {
 
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
 
   useEffect(() => {
     api
@@ -96,25 +97,34 @@ export default function ForumPage() {
   }, [selectedUni]);
 
   useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      try {
-        const params: any = { q, topic, page, limit: PAGE_SIZE };
-        if (selectedUni !== "wszystkie") params.uni = selectedUni;
-        const r = await api.get<Post[]>("/forum", { params });
-        setPosts(r.data || []);
-      } finally {
-        setLoading(false);
-      }
-    };
+    setPage(1);
+    setHasMore(true);
+  }, [q, topic, selectedUni]);
+
+  useEffect(() => {
+  const load = async () => {
+    setLoading(true);
+    try {
+      const params: any = { q, topic, offset: (page - 1) * PAGE_SIZE, limit: PAGE_SIZE };
+      if (selectedUni !== "wszystkie") params.uni = selectedUni;
+      const r = await api.get<Post[]>("/forum", { params });
+      const newPosts = r.data || [];
+      setPosts(newPosts);
+      setHasMore(newPosts.length === PAGE_SIZE);
+    } finally {
+      setLoading(false);
+    }
+  };
     load();
   }, [q, topic, page, selectedUni]);
 
   const refresh = async () => {
-    const params: any = { q, topic, page };
+    const params: any = { q, topic, offset: (page - 1) * PAGE_SIZE, limit: PAGE_SIZE };
     if (selectedUni !== "wszystkie") params.uni = selectedUni;
     const r = await api.get<Post[]>("/forum", { params });
-    setPosts(r.data || []);
+    const newPosts = r.data || [];
+    setPosts(newPosts);
+    setHasMore(newPosts.length === PAGE_SIZE);
   };
 
   const createPost = async (e: React.FormEvent) => {
@@ -165,9 +175,9 @@ export default function ForumPage() {
   };
 
   return (
-    <div className="h-screen overflow-hidden bg-slate-100 flex flex-col">
+    <div className="h-screen overflow-hidden bg-slate-100 dark:bg-slate-900 flex flex-col">
       <TopNav />
-      <div className="mx-auto max-w-[2000px] px-2 py-4 w-full h-[calc(100vh-80px)] grid grid-cols-1 md:grid-cols-[400px,1fr] gap-4 overflow-hidden">
+      <div className="px-2 py-4 w-full h-[calc(100vh-80px)] grid grid-cols-1 md:grid-cols-[400px,1fr] gap-4 overflow-hidden">
         <div className="h-full overflow-hidden">
           <UniversitySidebar
             universities={universities}
@@ -176,32 +186,32 @@ export default function ForumPage() {
           />
         </div>
 
-        <section className="bg-white rounded-2xl shadow-sm border border-slate-200 h-full flex flex-col overflow-hidden">
+        <section className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-600 h-full flex flex-col overflow-hidden">
           <div className="p-4 border-b shrink-0">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-              <h1 className="text-xl md:text-2xl font-semibold">Forum</h1>
+              <h1 className="text-xl md:text-2xl font-semibold text-slate-900 dark:text-slate-100">Forum</h1>
               <div className="flex flex-wrap items-center gap-2">
-                <div className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2">
-                  <Search size={18} className="text-gray-500" />
+                <div className="flex items-center gap-2 bg-gray-50 dark:bg-slate-700 rounded-lg px-3 py-2">
+                  <Search size={18} className="text-gray-500 dark:text-slate-400" />
                   <input
                     value={q}
                     onChange={(e) => {
                       setQ(e.target.value);
                       setPage(1);
                     }}
-                    className="bg-transparent outline-none text-sm"
+                    className="bg-transparent outline-none text-sm text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400"
                     placeholder="Szukaj w postach…"
                   />
                 </div>
-                <div className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2">
-                  <Hash size={18} className="text-gray-500" />
+                <div className="flex items-center gap-2 bg-gray-50 dark:bg-slate-700 rounded-lg px-3 py-2">
+                  <Hash size={18} className="text-gray-500 dark:text-slate-400" />
                   <select
                     value={topic}
                     onChange={(e) => {
                       setTopic(e.target.value);
                       setPage(1);
                     }}
-                    className="bg-transparent outline-none text-sm"
+                    className="bg-transparent outline-none text-sm text-slate-900 dark:text-slate-100"
                   >
                     <option value="">Wszystkie tematy</option>
                     {TOPICS.map((t) => (
@@ -217,8 +227,8 @@ export default function ForumPage() {
                   className={`px-4 h-10 rounded-xl text-white font-medium shadow
                              ${
                                openComposer
-                                 ? "bg-rose-600 hover:bg-rose-700"
-                                 : "bg-indigo-600 hover:bg-indigo-700"
+                                 ? "bg-rose-600 hover:bg-rose-700 dark:bg-rose-700 dark:hover:bg-rose-800"
+                                 : "bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-700 dark:hover:bg-indigo-800"
                              }`}
                 >
                   {openComposer ? (
@@ -237,17 +247,17 @@ export default function ForumPage() {
             {openComposer && (
               <form
                 onSubmit={createPost}
-                className="mt-4 rounded-xl border border-indigo-200 bg-indigo-50/60 p-3 md:p-4"
+                className="mt-4 rounded-xl border border-indigo-200 dark:border-indigo-600 bg-indigo-50/60 dark:bg-indigo-900/20 p-3 md:p-4"
               >
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <div>
-                    <div className="text-xs font-medium text-indigo-800 mb-1">
+                    <div className="text-xs font-medium text-indigo-800 dark:text-indigo-300 mb-1">
                       Uczelnia
                     </div>
                     <select
                       value={formUni}
                       onChange={(e) => setFormUni(e.target.value)}
-                      className="w-full rounded-lg border border-indigo-200 bg-white px-3 py-2 outline-none"
+                      className="w-full rounded-lg border border-indigo-200 dark:border-indigo-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 outline-none"
                     >
                       <option>Ogólne</option>
                       {universities.map((u) => (
@@ -259,27 +269,27 @@ export default function ForumPage() {
                   </div>
 
                   <div className="md:col-span-1">
-                    <div className="text-xs font-medium text-indigo-800 mb-1">
+                    <div className="text-xs font-medium text-indigo-800 dark:text-indigo-300 mb-1">
                       Tytuł
                     </div>
                     <input
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
-                      className="w-full rounded-lg border border-indigo-200 bg-white px-3 py-2 outline-none"
+                      className="w-full rounded-lg border border-indigo-200 dark:border-indigo-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 px-3 py-2 outline-none"
                       placeholder="Np. Stypendium Rektora"
                     />
                   </div>
 
                   <div>
-                    <div className="text-xs font-medium text-indigo-800 mb-1">
+                    <div className="text-xs font-medium text-indigo-800 dark:text-indigo-300 mb-1">
                       Temat
                     </div>
-                    <div className="flex items-center gap-2 rounded-lg border border-indigo-200 bg-white px-3 py-2">
-                      <Hash size={16} className="text-indigo-500" />
+                    <div className="flex items-center gap-2 rounded-lg border border-indigo-200 dark:border-indigo-600 bg-white dark:bg-slate-800 px-3 py-2">
+                      <Hash size={16} className="text-indigo-500 dark:text-indigo-400" />
                       <select
                         value={formTopic}
                         onChange={(e) => setFormTopic(e.target.value)}
-                        className="flex-1 bg-transparent outline-none"
+                        className="flex-1 bg-transparent outline-none text-slate-900 dark:text-slate-100"
                       >
                         <option value="">Wybierz…</option>
                         {TOPICS.map((t) => (
@@ -292,14 +302,14 @@ export default function ForumPage() {
                   </div>
 
                   <div className="md:col-span-3">
-                    <div className="text-xs font-medium text-indigo-800 mb-1">
+                    <div className="text-xs font-medium text-indigo-800 dark:text-indigo-300 mb-1">
                       Krótki opis
                     </div>
                     <textarea
                       value={summary}
                       onChange={(e) => setSummary(e.target.value)}
                       rows={3}
-                      className="w-full rounded-lg border border-indigo-200 bg-white px-3 py-2 outline-none"
+                      className="w-full rounded-lg border border-indigo-200 dark:border-indigo-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 px-3 py-2 outline-none"
                       placeholder="W kilku zdaniach…"
                     />
                   </div>
@@ -308,7 +318,7 @@ export default function ForumPage() {
                 <div className="mt-3 flex justify-end">
                   <button
                     type="submit"
-                    className="px-4 h-10 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-medium shadow"
+                    className="px-4 h-10 rounded-xl bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-700 dark:hover:bg-indigo-800 text-white font-medium shadow"
                   >
                     Opublikuj
                   </button>
@@ -322,7 +332,7 @@ export default function ForumPage() {
               Array.from({ length: 5 }).map((_, i) => (
                 <div
                   key={i}
-                  className="h-24 rounded-xl border border-slate-200 bg-white animate-pulse"
+                  className="h-24 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 animate-pulse"
                 />
               ))
             ) : posts.length ? (
@@ -336,7 +346,7 @@ export default function ForumPage() {
                 />
               ))
             ) : (
-              <div className="text-slate-600">
+              <div className="text-slate-600 dark:text-slate-300">
                 Brak wpisów dla wybranych filtrów.
               </div>
             )}
@@ -348,22 +358,22 @@ export default function ForumPage() {
             disabled={page === 1}
             className={`px-3 py-1.5 rounded shadow ${
               page === 1
-                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                : "bg-white hover:bg-gray-50"
+                ? "bg-gray-100 dark:bg-slate-700 text-gray-400 dark:text-slate-500 cursor-not-allowed"
+                : "bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-100"
             }`}
           >
             Poprzednia
           </button>
 
-          <div className="text-sm text-gray-600">Strona {page}</div>
+          <div className="text-sm text-gray-600 dark:text-slate-300">Strona {page}</div>
 
           <button
             onClick={() => setPage((p) => p + 1)}
-            disabled={posts.length < PAGE_SIZE}
+            disabled={!hasMore}
             className={`px-3 py-1.5 rounded shadow ${
-              posts.length < PAGE_SIZE
-                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                : "bg-white hover:bg-gray-50"
+              !hasMore
+                ? "bg-gray-100 dark:bg-slate-700 text-gray-400 dark:text-slate-500 cursor-not-allowed"
+                : "bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-100"
             }`}
           >
             Następna
@@ -424,19 +434,19 @@ function PostCard({
   };
 
   return (
-    <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+    <article className="rounded-2xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 p-4 shadow-sm">
       {/* ── Autor, data ─────────────────────── */}
       <header className="flex items-start justify-between">
         <div className="flex flex-col gap-1">
-          <div className="flex items-center flex-wrap gap-2 text-sm text-slate-700">
+          <div className="flex items-center flex-wrap gap-2 text-sm text-slate-700 dark:text-slate-300">
             <span className="font-medium">
               {p.author.first_name} {p.author.last_name}
             </span>
             <span
               className={`text-[11px] px-2 py-0.5 rounded-full border ${
                 p.author.role === "student"
-                  ? "bg-amber-50 text-amber-700 border-amber-300"
-                  : "bg-rose-50 text-rose-700 border-rose-300"
+                  ? "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-600"
+                  : "bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-300 border-rose-300 dark:border-rose-600"
               }`}
             >
               {p.author.academic_title ||
@@ -445,26 +455,26 @@ function PostCard({
                   : "Pracownik naukowy")}
             </span>
             {p.author.university && (
-              <span className="text-[11px] px-2 py-0.5 rounded-full border bg-indigo-50 text-indigo-700 border-indigo-300">
+              <span className="text-[11px] px-2 py-0.5 rounded-full border bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 border-indigo-300 dark:border-indigo-600">
                 {p.author.university}
               </span>
             )}
-            <span className="text-[11px] px-2 py-0.5 rounded-full border bg-green-50 text-green-700 border-green-300">
+            <span className="text-[11px] px-2 py-0.5 rounded-full border bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border-green-300 dark:border-green-600">
               {p.topic}
             </span>
-            <span className="text-xs text-slate-500">
+            <span className="text-xs text-slate-500 dark:text-slate-400">
               {formatDateOnly(p.created_at)}
             </span>
           </div>
 
-          <div className="mt-1 text-lg font-semibold">{p.title}</div>
+          <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">{p.title}</div>
         </div>
 
         <div className="flex items-center gap-2">
           {canDelete && (
             <button
               onClick={() => onDelete(p.id)}
-              className="px-2 py-1 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100"
+              className="px-2 py-1 rounded-lg bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-600 hover:bg-rose-100 dark:hover:bg-rose-900/30"
               title="Usuń wpis"
             >
               <Trash2 size={16} />
@@ -478,7 +488,7 @@ function PostCard({
                   alert("Zgłoszenie wysłane do administratora.");
                 } catch {}
               }}
-              className="px-2 py-1 rounded-lg bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100"
+              className="px-2 py-1 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-600 hover:bg-amber-100 dark:hover:bg-amber-900/30"
               title="Zgłoś wpis"
             >
               <Flag size={16} />
@@ -489,7 +499,7 @@ function PostCard({
 
       {/* ── Opis ─────────────────────── */}
       {p.summary && (
-        <p className="mt-3 text-slate-800 whitespace-pre-wrap">{p.summary}</p>
+        <p className="mt-3 text-slate-800 dark:text-slate-200 whitespace-pre-wrap">{p.summary}</p>
       )}
 
       {/* ── Reakcje ─────────────────────── */}
@@ -498,7 +508,7 @@ function PostCard({
           <button
             key={r.key}
             onClick={() => onReact(p.id, r.key)}
-            className="text-sm px-3 py-1.5 rounded-full bg-white/60 text-indigo-700 hover:bg-white shadow-sm"
+            className="text-sm px-3 py-1.5 rounded-full bg-white/60 dark:bg-slate-700/60 text-indigo-700 dark:text-indigo-300 hover:bg-white dark:hover:bg-slate-600 shadow-sm"
             title={r.label}
           >
             {r.label}{" "}
@@ -511,7 +521,7 @@ function PostCard({
       <div className="mt-3">
         <button
           onClick={toggleComments}
-          className="text-sm px-3 py-1.5 rounded-lg bg-gray-50 hover:bg-gray-100 border"
+          className="text-sm px-3 py-1.5 rounded-lg bg-gray-50 dark:bg-slate-700 hover:bg-gray-100 dark:hover:bg-slate-600 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300"
         >
           {open ? (
             <ChevronUp className="inline mr-1" size={16} />
@@ -525,9 +535,9 @@ function PostCard({
       {open && (
         <div className="mt-3">
           {loadingReplies ? (
-            <div className="text-slate-500 text-sm">Ładowanie komentarzy…</div>
+            <div className="text-slate-500 dark:text-slate-400 text-sm">Ładowanie komentarzy…</div>
           ) : replies.length === 0 ? (
-            <div className="text-slate-500 text-sm">Brak komentarzy.</div>
+            <div className="text-slate-500 dark:text-slate-400 text-sm">Brak komentarzy.</div>
           ) : (
             <ReplyTree
               nodes={replies}
@@ -540,12 +550,12 @@ function PostCard({
             <input
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              className="flex-1 rounded-xl border px-3 py-2"
+              className="flex-1 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 px-3 py-2"
               placeholder="Dodaj komentarz…"
             />
             <button
               onClick={submitComment}
-              className="px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white"
+              className="px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-700 dark:hover:bg-indigo-800 text-white"
             >
               Skomentuj
             </button>
@@ -571,9 +581,16 @@ function ReplyTree({
 }) {
   const indent = depth === 0 ? 0 : 16;
 
+  // sort newer first
+  const sorted = [...nodes].sort((a, b) => {
+    const ta = new Date(a.created_at || 0).getTime();
+    const tb = new Date(b.created_at || 0).getTime();
+    return tb - ta;
+  });
+
   return (
     <div className="space-y-2">
-      {nodes.map((n) => (
+      {sorted.map((n) => (
         <ReplyNode
           key={n.id}
           n={n}
@@ -582,7 +599,7 @@ function ReplyTree({
           currentUser={currentUser}
           reload={reload}
         >
-          {depth < 2 && n.children?.length ? (
+          {depth < 1 && n.children?.length ? (
             <ReplyTree
               nodes={n.children}
               depth={depth + 1}
@@ -612,13 +629,15 @@ function ReplyNode({
   children?: React.ReactNode;
 }) {
   const [answer, setAnswer] = useState("");
+  const [openReply, setOpenReply] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const canDelete =
     currentUser && (currentUser.role === "admin" || currentUser.id === n.author.id);
   const canReport = currentUser && currentUser.id !== n.author.id;
 
   const flaggedCls = n.flagged
-    ? "border-amber-300 bg-amber-50/60"
-    : "border-slate-200 bg-white";
+    ? "border-amber-300 dark:border-amber-600 bg-amber-50/60 dark:bg-amber-900/20"
+    : "border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800";
 
   const submitAnswer = async () => {
     const text = answer.trim();
@@ -661,15 +680,15 @@ function ReplyNode({
     >
       <div className="px-3 py-2">
         <div className="flex items-center justify-between">
-          <div className="text-sm text-slate-700 flex items-center gap-2">
+          <div className="text-sm text-slate-700 dark:text-slate-300 flex items-center gap-2">
             <span className="font-medium">
               {n.author.first_name} {n.author.last_name}
             </span>
             <span
               className={`text-[11px] px-2 py-0.5 rounded-full border ${
                 n.author.role === "student"
-                  ? "bg-amber-50 text-amber-700 border-amber-300"
-                  : "bg-rose-50 text-rose-700 border-rose-300"
+                  ? "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-600"
+                  : "bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-300 border-rose-300 dark:border-rose-600"
               }`}
             >
               {n.author.academic_title ||
@@ -677,14 +696,14 @@ function ReplyNode({
                   ? "Student"
                   : "Pracownik naukowy")}
             </span>
-            <span className="text-xs text-slate-500">
+            <span className="text-xs text-slate-500 dark:text-slate-400">
               {formatDateOnly(n.created_at)}
             </span>
           </div>
           <div className="flex items-center gap-1">
             <button
               onClick={() => doReact("up")}
-              className="text-slate-600 hover:text-slate-900 px-2 py-1 rounded"
+              className="text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 px-2 py-1 rounded"
               title="Lubię to"
             >
               <ThumbsUp size={16} />{" "}
@@ -692,7 +711,7 @@ function ReplyNode({
             </button>
             <button
               onClick={() => doReact("down")}
-              className="text-slate-600 hover:text-slate-900 px-2 py-1 rounded"
+              className="text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 px-2 py-1 rounded"
               title="Nie podoba mi się"
             >
               <ThumbsDown size={16} />{" "}
@@ -701,7 +720,7 @@ function ReplyNode({
             {canReport && (
               <button
                 onClick={doReport}
-                className="text-amber-700 hover:bg-amber-50 px-2 py-1 rounded"
+                className="text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 px-2 py-1 rounded"
                 title="Zgłoś komentarz"
               >
                 <Flag size={16} />
@@ -710,7 +729,7 @@ function ReplyNode({
             {canDelete && (
               <button
                 onClick={doDelete}
-                className="text-rose-700 hover:bg-rose-50 px-2 py-1 rounded"
+                className="text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 px-2 py-1 rounded"
                 title="Usuń komentarz"
               >
                 <Trash2 size={16} />
@@ -719,27 +738,57 @@ function ReplyNode({
           </div>
         </div>
 
-        <div className="mt-1 whitespace-pre-wrap break-words">{n.body}</div>
-
-        {depth === 0 && (
-          <div className="mt-2 flex items-center gap-2">
-            <CornerDownRight size={16} className="text-slate-400" />
-            <input
-              value={answer}
-              onChange={(e) => setAnswer(e.target.value)}
-              className="flex-1 rounded-lg border px-3 py-1.5"
-              placeholder="Odpowiedz…"
-            />
+        <div className="mt-1 whitespace-pre-wrap break-words text-slate-900 dark:text-slate-100">{n.body}</div>
+        <div className="mt-2 flex items-center gap-2">
+          {depth === 0 && (
             <button
-              onClick={submitAnswer}
-              className="px-3 py-1.5 rounded-lg bg-indigo-600 text-white"
+              onClick={() => setOpenReply((v) => !v)}
+              className="text-xs px-2 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-600"
             >
-              Wyślij
+              Odpowiedz
             </button>
-          </div>
-        )}
+          )}
+          {depth === 0 && n.children?.length ? (
+            <button
+              onClick={() => setExpanded((v) => !v)}
+              className="text-xs px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600"
+            >
+              {expanded ? `Zwiń odpowiedzi (${n.children.length})` : `Pokaż odpowiedzi (${n.children.length})`}
+            </button>
+          ) : null}
+        </div>
       </div>
-      {children}
+      {/* children tree with indent, collapsible */}
+      {depth === 0 && (n.children?.length || openReply) ? (
+        <div className="pl-4 border-l border-slate-200 dark:border-slate-600">
+          {expanded ? children : null}
+          {openReply && (
+            <div className="px-3 py-2">
+              <div className="mt-2 flex items-center gap-2">
+                <CornerDownRight size={16} className="text-slate-400 dark:text-slate-500" />
+                <input
+                  value={answer}
+                  onChange={(e) => setAnswer(e.target.value)}
+                  className="flex-1 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 px-3 py-1.5"
+                  placeholder="Odpowiedz…"
+                />
+                <button
+                  onClick={submitAnswer}
+                  className="px-3 py-1.5 rounded-lg bg-indigo-600 dark:bg-indigo-700 hover:bg-indigo-700 dark:hover:bg-indigo-800 text-white"
+                >
+                  Wyślij
+                </button>
+                <button
+                  onClick={() => setOpenReply(false)}
+                  className="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300"
+                >
+                  Anuluj
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      ) : null}
     </div>
   );
 }

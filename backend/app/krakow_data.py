@@ -33,9 +33,10 @@ for uni in _DATA:
         UNIVERSITY_CONTACTS[name] = contacts
 
 ACADEMIC_TITLES = [
-    "profesor", "profesor uczelni",
-    "doktor habilitowany", "dr hab.",
-    "doktor", "dr",
-    "magister", "mgr",
-    "inżynier", "mgr inż.",
+    "Profesor", "Profesor Uczelni",
+    "Doktor Habilitowany",
+    "Doktor",
+    "Magister Inżynier",
+    "Magister",
+    "Inżynier",
 ]

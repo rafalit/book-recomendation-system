@@ -3,6 +3,9 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func, or_
 from typing import List, Optional, Dict
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from threading import Lock
+from app.db.database import SessionLocal
 from app.db.database import get_db
 from app import models, schemas
 from .routes_books import _enrich_with_ratings, _persist_book
@@ -112,7 +115,7 @@ def rankings_multi(
     seen_global = set()  # 🔹 globalny set dla wszystkich uczelni
 
     for uni in q:
-        # 🔹 lokalne
+        # 🔹 lokalne książki
         local_books = (
             db.query(models.book.Book)
             .filter(models.book.Book.university == uni)

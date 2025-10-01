@@ -69,10 +69,10 @@ export default function RankingFilters({
       : `${value.categories.length} wybrane`;
 
   return (
-    <section className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 w-full">
+    <section className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-600 p-4 w-full">
       <div className="flex items-center gap-2 mb-3">
-        <Filter size={18} className="text-indigo-700" />
-        <h2 className="text-slate-800 font-semibold">Filtry rankingów</h2>
+        <Filter size={18} className="text-indigo-700 dark:text-indigo-400" />
+        <h2 className="text-slate-800 dark:text-slate-200 font-semibold">Filtry rankingów</h2>
       </div>
 
       <div className="flex flex-wrap items-center gap-6">
@@ -86,7 +86,7 @@ export default function RankingFilters({
                 sortBy: e.target.value as RankingFiltersValue["sortBy"],
               })
             }
-            className="h-10 rounded-lg bg-white border border-slate-300 px-3"
+            className="h-10 rounded-lg bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100 px-3"
           >
             <option value="">Alfabetycznie</option>
             <option value="avg_rating">Średnia ocena</option>
@@ -100,7 +100,7 @@ export default function RankingFilters({
                 order: value.order === "asc" ? "desc" : "asc",
               })
             }
-            className="flex items-center gap-1 px-3 py-1.5 border rounded-lg text-slate-700 hover:bg-slate-50"
+            className="flex items-center gap-1 px-3 py-1.5 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700"
           >
             <ArrowUpDown size={16} />
             {value.order === "asc" ? "Rosnąco" : "Malejąco"}
@@ -126,7 +126,7 @@ export default function RankingFilters({
             value={stars[1]}
             onChange={(e) => handleStarsChange(stars[0], Number(e.target.value))}
           />
-          <span className="ml-2 text-sm text-slate-600">
+          <span className="ml-2 text-sm text-slate-600 dark:text-slate-300">
             {stars[0] / 2} – {stars[1] / 2} ⭐
           </span>
         </div>
@@ -137,20 +137,20 @@ export default function RankingFilters({
             <button
               type="button"
               onClick={() => setOpenCategories((o) => !o)}
-              className="h-10 px-3 rounded-lg bg-white border border-slate-300 flex items-center gap-2"
+              className="h-10 px-3 rounded-lg bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100 flex items-center gap-2"
             >
               <BookOpen size={16} className="text-slate-500" />
               {selectedCount}
             </button>
 
             {openCategories && (
-              <div className="absolute z-10 mt-2 w-56 max-h-64 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg">
+              <div className="absolute z-10 mt-2 w-56 max-h-64 overflow-y-auto rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 shadow-lg">
                 {allCategories.map((cat) => {
                   const selected = value.categories.includes(cat);
                   return (
                     <label
                       key={cat}
-                      className="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-slate-100"
+                      className="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-900 dark:text-slate-100"
                     >
                       <input
                         type="checkbox"
@@ -176,7 +176,7 @@ export default function RankingFilters({
             onChange={(e) =>
               onChange({ ...value, year: e.target.value ? Number(e.target.value) : null })
             }
-            className="h-10 rounded-lg bg-white border border-slate-300 px-3"
+            className="h-10 rounded-lg bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100 px-3"
           >
             {years.map((y) =>
               y ? (
@@ -192,7 +192,7 @@ export default function RankingFilters({
           </select>
         </div>
 
-        <span className="ml-auto text-slate-600 text-sm">
+        <span className="ml-auto text-slate-600 dark:text-slate-300 text-sm">
           Wyników: <span className="font-semibold">{resultCount}</span>
         </span>
       </div>
