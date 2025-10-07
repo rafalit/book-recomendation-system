@@ -571,13 +571,25 @@ def update_review(
     db: Session = Depends(get_db),
     user=Depends(get_current_user),
 ):
-    review = (
-        db.query(models.book.Review)
-        .filter_by(id=review_id, book_id=book_id, user_id=user.id)
-        .first()
-    )
+    # Admin może edytować dowolne recenzje, zwykli użytkownicy tylko swoje
+    if user.role == "admin":
+        review = (
+            db.query(models.book.Review)
+            .filter_by(id=review_id, book_id=book_id)
+            .first()
+        )
+    else:
+        review = (
+            db.query(models.book.Review)
+            .filter_by(id=review_id, book_id=book_id, user_id=user.id)
+            .first()
+        )
+    
     if not review:
-        raise HTTPException(404, "Review not found or not yours")
+        if user.role == "admin":
+            raise HTTPException(404, "Review not found")
+        else:
+            raise HTTPException(404, "Review not found or not yours")
 
     review.text = rev.text
     review.rating = rev.rating
@@ -610,13 +622,25 @@ def delete_review(
     db: Session = Depends(get_db),
     user=Depends(get_current_user),
 ):
-    review = (
-        db.query(models.book.Review)
-        .filter_by(id=review_id, book_id=book_id, user_id=user.id)
-        .first()
-    )
+    # Admin może usuwać dowolne recenzje, zwykli użytkownicy tylko swoje
+    if user.role == "admin":
+        review = (
+            db.query(models.book.Review)
+            .filter_by(id=review_id, book_id=book_id)
+            .first()
+        )
+    else:
+        review = (
+            db.query(models.book.Review)
+            .filter_by(id=review_id, book_id=book_id, user_id=user.id)
+            .first()
+        )
+    
     if not review:
-        raise HTTPException(404, "Review not found or not owned by user")
+        if user.role == "admin":
+            raise HTTPException(404, "Review not found")
+        else:
+            raise HTTPException(404, "Review not found or not owned by user")
 
     db.delete(review)
     db.commit()
@@ -648,6 +672,10 @@ def loan_book(
     db: Session = Depends(get_db),
     user=Depends(get_current_user),
 ):
+    # Administratorzy nie mogą wypożyczać książek
+    if user.role == "admin":
+        raise HTTPException(400, "Administratorzy nie mogą wypożyczać książek")
+    
     book = db.query(models.book.Book).get(book_id)
     if not book:
         raise HTTPException(404, "Book not found")
@@ -687,6 +715,7 @@ def my_active_loans(
 ):
     loans = (
         db.query(models.book.Loan)
+        .options(joinedload(models.book.Loan.book))
         .filter_by(user_id=user.id, returned_at=None)
         .order_by(models.book.Loan.due_date.asc())
         .all()
@@ -725,7 +754,7 @@ def return_book(book_id: int, db: Session = Depends(get_db), user=Depends(get_cu
 def recommend(
     db: Session = Depends(get_db),
     user=Depends(get_current_user),
-    limit: int = 10,
+    limit: int = Query(10, description="Liczba rekomendacji", le=100),
 ):
     return recommend_books(user, db, limit=limit)
 
@@ -870,6 +899,42 @@ def add_manual_book(
     db.commit()
     db.refresh(book)
     return book
+
+@router.put("/{book_id}", response_model=schemas.book.BookOut)
+def update_book(
+    book_id: int,
+    data: schemas.book.BookUpdate,
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+):
+    book = db.query(models.book.Book).get(book_id)
+    if not book:
+        raise HTTPException(404, "Book not found")
+
+    # 🔹 pozwól edytować tylko książki dodane ręcznie
+    if book.google_id is not None:
+        raise HTTPException(400, "Nie można edytować książek z Google Books")
+
+    # 🔹 tylko właściciel może edytować (admin nie może)
+    if book.created_by != user.id:
+        raise HTTPException(403, "Nie masz uprawnień do edycji tej książki")
+
+    if not data.title or not data.authors:
+        raise HTTPException(400, "Brak wymaganych pól")
+
+    # Update book fields
+    book.title = data.title
+    book.authors = data.authors
+    book.publisher = data.publisher
+    book.published_date = data.published_date
+    book.thumbnail = data.thumbnail
+    book.categories = data.categories
+    book.description = data.description
+    book.available_copies = data.available_copies or 1
+
+    db.commit()
+    db.refresh(book)
+    return _enrich_with_ratings(db, book.__dict__)
 
 @router.delete("/{book_id}")
 def delete_book(

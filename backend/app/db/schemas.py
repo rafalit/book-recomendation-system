@@ -3,7 +3,7 @@ from pydantic import BaseModel, EmailStr, field_validator
 from typing import Optional, Literal
 from datetime import datetime
 
-Role = Literal["student", "researcher"]
+Role = Literal["student", "researcher", "admin"]
 
 class RegisterIn(BaseModel):
     role: Role

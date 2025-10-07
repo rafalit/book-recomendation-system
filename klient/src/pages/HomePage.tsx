@@ -67,17 +67,16 @@ export default function HomePage() {
   }, [cfg]);
 
   useEffect(() => {
-    if (!cfg) return;
     const ctrl = new AbortController();
     const fetchNews = async () => {
       setLoading(true);
       try {
         if (selected === "wszystkie") {
-          const uniNames = universities.slice(0, 6);
-          if (!uniNames.length) { setRaw([]); return; }
-          const q = uniNames.join(",");
+          // Używamy wszystkich dostępnych uczelni zamiast tylko 6
+          if (!universities.length) { setRaw([]); return; }
+          const q = universities.join(",");
           const r = await api.get<Record<string, NewsItem[]>>("/news/multi", {
-            params: { q, limit_each: 6 },
+            params: { q, limit_each: 20 },
             signal: ctrl.signal as any,
           });
           const merged = Object.values(r.data).flat();
@@ -86,7 +85,7 @@ export default function HomePage() {
           setRaw(Array.from(byLink.values()));
         } else {
           const r = await api.get<NewsItem[]>("/news", {
-            params: { q: selected, max_results: 24 },
+            params: { q: selected, max_results: 60 },
             signal: ctrl.signal as any,
           });
           setRaw(r.data);
@@ -97,9 +96,11 @@ export default function HomePage() {
         setLoading(false);
       }
     };
+    
+    // Wywołaj fetchNews od razu, nie czekaj na cfg
     fetchNews();
     return () => ctrl.abort();
-  }, [cfg, selected, universities]);
+  }, [selected, universities]);
 
   const publishersAll = useMemo(() => {
     const s = new Set<string>();

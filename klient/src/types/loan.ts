@@ -5,4 +5,10 @@ export type Loan = {
   start_date: string;
   due_date: string;
   returned_at?: string | null;
+  book?: {
+    id: number;
+    title: string;
+    authors: string;
+    thumbnail?: string;
+  };
 };

@@ -61,7 +61,7 @@ def reset_confirm(body: schemas.ResetConfirm, db: Session = Depends(get_db)):
     # nie zdradzamy istnienia emaila
     if not user:
         return {"message": "Hasło zmienione, jeśli email istnieje."}
-    auth.validate_password_strength(body.new_password)
+    auth.validate_password_strength(body.new_password, body.email)
     user.hashed_password = auth.hash_password(body.new_password)
     db.add(user)
     db.commit()

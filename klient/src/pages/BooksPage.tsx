@@ -24,6 +24,12 @@ export default function BooksPage() {
 
   const [loading, setLoading] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
+  
+  // 🔹 stan dla wybranych książek do forum
+  const [selectedBookIds, setSelectedBookIds] = useState<Set<number>>(new Set());
+  
+  // Stan dla wybranej książki do szczegółów
+  const [selectedBook, setSelectedBook] = useState<Book | null>(null);
 
   const [filters, setFilters] = useState<BookFiltersValue>({
     query: "",
@@ -36,10 +42,12 @@ export default function BooksPage() {
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   const { loans, refresh } = useMyLoans();
 
-  // ⭐ ulubione (localStorage)
+  // ⭐ ulubione (localStorage) - per użytkownik
   const [favoriteIds, setFavoriteIds] = useState<number[]>(() => {
     try {
-      const raw = localStorage.getItem("favoriteBookIds");
+      const userId = user?.id;
+      if (!userId) return [];
+      const raw = localStorage.getItem(`favoriteBookIds_${userId}`);
       return raw ? (JSON.parse(raw) as number[]) : [];
     } catch {
       return [];
@@ -47,15 +55,50 @@ export default function BooksPage() {
   });
 
   const toggleFavorite = (bookId: number) => {
+    // Admin nie może dodawać do ulubionych
+    if (user?.role === "admin") return;
+    
     setFavoriteIds((prev) => {
       const exists = prev.includes(bookId);
       const next = exists ? prev.filter((id) => id !== bookId) : [...prev, bookId];
       try {
-        localStorage.setItem("favoriteBookIds", JSON.stringify(next));
+        const userId = user?.id;
+        if (userId) {
+          localStorage.setItem(`favoriteBookIds_${userId}`, JSON.stringify(next));
+        }
       } catch {}
       return next;
     });
   };
+
+  // 🔹 funkcja do wyboru książek do forum
+  const toggleBookSelection = (bookId: number) => {
+    setSelectedBookIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(bookId)) {
+        next.delete(bookId);
+      } else {
+        next.add(bookId);
+      }
+      return next;
+    });
+  };
+
+  // Odśwież ulubione gdy zmieni się użytkownik
+  useEffect(() => {
+    try {
+      const userId = user?.id;
+      if (!userId) {
+        setFavoriteIds([]);
+        return;
+      }
+      const raw = localStorage.getItem(`favoriteBookIds_${userId}`);
+      const ids = raw ? (JSON.parse(raw) as number[]) : [];
+      setFavoriteIds(ids);
+    } catch {
+      setFavoriteIds([]);
+    }
+  }, [user?.id]);
 
   // 🎯 rekomendacje
   const [recommendedIds, setRecommendedIds] = useState<Set<number>>(new Set());
@@ -198,7 +241,7 @@ export default function BooksPage() {
   return (
     <div className="h-screen overflow-hidden bg-slate-100 dark:bg-slate-900 flex flex-col">
       <TopNav />
-      <div className="px-2 py-4 w-full h-[calc(100vh-80px)] grid grid-cols-1 md:grid-cols-[400px,1fr] gap-4 overflow-hidden">
+      <div className={`px-2 py-4 w-full h-[calc(100vh-80px)] grid grid-cols-1 gap-4 overflow-hidden ${selectedBook ? 'md:grid-cols-[400px,1fr,400px]' : 'md:grid-cols-[400px,1fr]'}`}>
         {/* sidebar uczelni */}
         <div className="h-full overflow-hidden bg-blue-600 text-white rounded-2xl">
           <UniversitySidebar
@@ -215,35 +258,170 @@ export default function BooksPage() {
               value={filters}
               onChange={setFilters}
               resultCount={books.length}
-              disableAvailableToggle={selected === "wszystkie"}
+              disableAvailableToggle={selected === "wszystkie" || user?.role === "admin"}
+              disableFavoritesToggle={user?.role === "admin"}
               categories={categories}
             />
 
-            {selected !== "wszystkie" && (
-              <button
-                onClick={() => setShowAddModal(true)}
-                className="px-3 py-1.5 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium shadow"
-              >
-                + Dodaj książkę
-              </button>
-            )}
+            <div className="flex gap-2">
+              {selectedBookIds.size > 0 && user?.role !== "admin" && (
+                <button
+                  onClick={() => {
+                    // Przekieruj do formularza forum z wybranymi książkami
+                    const selectedBooks = books.filter(b => selectedBookIds.has(b.id));
+                    const bookIds = selectedBooks.map(b => b.id);
+                    const bookTitles = selectedBooks.map(b => b.title);
+                    const queryParams = new URLSearchParams({
+                      book_ids: bookIds.join(','),
+                      book_titles: bookTitles.join(',')
+                    });
+                    window.location.href = `/forum?${queryParams.toString()}`;
+                  }}
+                  className="px-3 py-1.5 rounded-full bg-green-600 hover:bg-green-700 text-white text-sm font-medium shadow"
+                >
+                  Rozpocznij dyskusję na forum ({selectedBookIds.size})
+                </button>
+              )}
+              
+              {selected !== "wszystkie" && user?.role !== "admin" && (
+                <button
+                  onClick={() => setShowAddModal(true)}
+                  className="px-3 py-1.5 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium shadow"
+                >
+                  + Dodaj książkę
+                </button>
+              )}
+            </div>
           </div>
           <div className="flex-1 overflow-y-auto">
             <BookList
               items={books}
               loading={loading}
-              disableLoan={selected === "wszystkie"}
+              disableLoan={selected === "wszystkie" || user?.role === "admin"}
               user={user}
               loans={loans}
               refreshLoans={refresh}
               favorites={new Set(favoriteIds)}
               onToggleFavorite={toggleFavorite}
+              selectedBookIds={selectedBookIds}
+              onToggleBookSelection={toggleBookSelection}
               onDeleted={(id) =>
                 setBooks((prev) => prev.filter((b) => b.id !== id))
               }
+              onUpdated={(updatedBook) => {
+                setBooks((prev) => 
+                  prev.map((b) => b.id === updatedBook.id ? updatedBook : b)
+                );
+                setAllBooks((prev) => 
+                  prev.map((b) => b.id === updatedBook.id ? updatedBook : b)
+                );
+              }}
+              selectedBook={selectedBook}
+              setSelectedBook={setSelectedBook}
             />
           </div>
         </section>
+
+        {/* Trzecia kolumna - Szczegóły książki */}
+        {selectedBook && (
+          <div className="h-full overflow-hidden">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-600 h-full flex flex-col overflow-hidden">
+              <div className="p-4 border-b shrink-0 flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Szczegóły książki</h2>
+                <button
+                  onClick={() => setSelectedBook(null)}
+                  className="p-2 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+                  aria-label="Zamknij"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-4">
+                <div className="space-y-4">
+                  {/* Okładka */}
+                  <div className="flex justify-center">
+                    {selectedBook.thumbnail ? (
+                      <img
+                        src={selectedBook.thumbnail}
+                        alt={selectedBook.title}
+                        className="w-48 h-64 object-cover rounded-xl shadow-lg"
+                      />
+                    ) : (
+                      <div className="w-48 h-64 bg-slate-200 dark:bg-slate-700 rounded-xl flex items-center justify-center text-slate-500 dark:text-slate-400">
+                        brak okładki
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Tytuł i autor */}
+                  <div>
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2">
+                      {selectedBook.title}
+                    </h3>
+                    <p className="text-lg text-slate-600 dark:text-slate-300">
+                      {selectedBook.authors}
+                    </p>
+                  </div>
+
+                  {/* Opis */}
+                  {selectedBook.description && (
+                    <div>
+                      <h4 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
+                        Opis
+                      </h4>
+                      <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
+                        {selectedBook.description}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Szczegóły */}
+                  <div className="space-y-2">
+                    {selectedBook.publisher && (
+                      <div>
+                        <span className="font-semibold text-slate-900 dark:text-slate-100">Wydawca:</span>
+                        <span className="ml-2 text-slate-600 dark:text-slate-300">{selectedBook.publisher}</span>
+                      </div>
+                    )}
+                    {selectedBook.published_date && (
+                      <div>
+                        <span className="font-semibold text-slate-900 dark:text-slate-100">Data wydania:</span>
+                        <span className="ml-2 text-slate-600 dark:text-slate-300">{selectedBook.published_date}</span>
+                      </div>
+                    )}
+                    {selectedBook.isbn && (
+                      <div>
+                        <span className="font-semibold text-slate-900 dark:text-slate-100">ISBN:</span>
+                        <span className="ml-2 text-slate-600 dark:text-slate-300">{selectedBook.isbn}</span>
+                      </div>
+                    )}
+                    {selectedBook.available_copies !== undefined && (
+                      <div>
+                        <span className="font-semibold text-slate-900 dark:text-slate-100">Dostępne kopie:</span>
+                        <span className="ml-2 text-slate-600 dark:text-slate-300">{selectedBook.available_copies}</span>
+                      </div>
+                    )}
+                  </div>
+
+
+                  {/* Kategorie */}
+                  {selectedBook.categories && (
+                    <div>
+                      <h4 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
+                        Kategorie
+                      </h4>
+                      <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-sm font-medium">
+                        {selectedBook.categories}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
       {showAddModal && (
         <BookAddModal

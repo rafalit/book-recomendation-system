@@ -36,8 +36,13 @@ def format_notification(n: Notification) -> str:
         return f"{who} odpowiedział(a) w Twoim wątku"
 
     if n.type == "report":
-        reason = data.get("reason") or ""
-        return f"Twój komentarz został zgłoszony: {reason}"
+        if data.get("reply_id"):
+            return "Komentarz został zgłoszony"
+        elif data.get("post_id"):
+            return "Post został zgłoszony"
+        elif data.get("review_id"):
+            return "Recenzja została zgłoszona"
+        return "Treść została zgłoszona"
 
     if n.type == "review_reaction":
         return f"{who} ocenił(a) Twoją recenzję"

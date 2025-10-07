@@ -1,6 +1,7 @@
 // src/components/books/BookReviewModal.tsx
 import { useEffect, useState } from "react";
 import { X, Edit3, Trash2, ThumbsUp, ThumbsDown, Pencil, Flag } from "lucide-react";
+import ConfirmDialog from "../ui/ConfirmDialog";
 import api from "../../lib/api";
 import { Book } from "./BookCard";
 
@@ -130,11 +131,22 @@ export default function BookReviewModal({
     }
   };
 
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [reviewToDelete, setReviewToDelete] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const handleDelete = async (id: number) => {
-    if (!window.confirm("Na pewno chcesz usunąć recenzję?")) return;
+    setReviewToDelete(id);
+    setShowDeleteDialog(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!reviewToDelete) return;
+    
+    setIsDeleting(true);
     try {
-      const res = await api.delete(`/books/${bookId}/reviews/${id}`);
-      setReviews((prev) => prev.filter((r) => r.id !== id));
+      const res = await api.delete(`/books/${bookId}/reviews/${reviewToDelete}`);
+      setReviews((prev) => prev.filter((r) => r.id !== reviewToDelete));
 
       if (onBookUpdate) {
         onBookUpdate({
@@ -142,9 +154,13 @@ export default function BookReviewModal({
           reviews_count: res.data.reviews_count,
         });
       }
+      setShowDeleteDialog(false);
+      setReviewToDelete(null);
     } catch (err) {
       console.error(err);
       alert("Błąd podczas usuwania recenzji.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -171,14 +187,28 @@ export default function BookReviewModal({
   };
 
 
+  const [showReportDialog, setShowReportDialog] = useState(false);
+  const [reviewToReport, setReviewToReport] = useState<number | null>(null);
+  const [isReporting, setIsReporting] = useState(false);
+
   const handleReport = async (id: number) => {
-    if (!window.confirm("Zgłosić tę recenzję?")) return;
+    setReviewToReport(id);
+    setShowReportDialog(true);
+  };
+
+  const handleReportConfirm = async () => {
+    if (!reviewToReport) return;
+    
+    setIsReporting(true);
     try {
-      await api.post(`/books/${bookId}/reviews/${id}/report`);
-      alert("Zgłoszenie wysłane.");
+      await api.post(`/books/${bookId}/reviews/${reviewToReport}/report`);
+      setShowReportDialog(false);
+      setReviewToReport(null);
     } catch (err) {
       console.error(err);
       alert("Błąd podczas zgłaszania recenzji.");
+    } finally {
+      setIsReporting(false);
     }
   };
 
@@ -224,11 +254,11 @@ export default function BookReviewModal({
         </button>
 
         <h2 className="text-lg font-semibold mb-4">
-          Recenzje: <span className="text-indigo-700">{bookTitle}</span>
+          {user?.role === "admin" ? "Moderacja recenzji" : "Recenzje"}: <span className="text-indigo-700">{bookTitle}</span>
         </h2>
 
-        {/* formularz */}
-        {!readOnly && (
+        {/* formularz - ukryty dla adminów */}
+        {!readOnly && user?.role !== "admin" && (
           <div className="border-b pb-4 mb-4">
             <div className="flex gap-1 mb-2">{renderStars()}</div>
             <textarea
@@ -277,7 +307,16 @@ export default function BookReviewModal({
                       <RoleBadge user={r.user} />
                     </span>
                     <div className="flex items-center gap-2">
-                      {!readOnly && (
+                      {user?.role === "admin" ? (
+                        // Admin może tylko usuwać recenzje (nawet w trybie readOnly)
+                        <button
+                          onClick={() => handleDelete(r.id)}
+                          className="text-red-500 hover:text-red-700"
+                          title="Usuń recenzję"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      ) : !readOnly && (
                       r.user?.id === currentUserId ? (
                         <>
                           <button
@@ -360,6 +399,30 @@ export default function BookReviewModal({
           )}
         </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={showDeleteDialog}
+        onClose={() => setShowDeleteDialog(false)}
+        onConfirm={handleDeleteConfirm}
+        title="Usuń recenzję"
+        message="Czy na pewno chcesz usunąć tę recenzję? Ta operacja jest nieodwracalna."
+        confirmText="Usuń"
+        cancelText="Anuluj"
+        type="danger"
+        isLoading={isDeleting}
+      />
+
+      <ConfirmDialog
+        isOpen={showReportDialog}
+        onClose={() => setShowReportDialog(false)}
+        onConfirm={handleReportConfirm}
+        title="Zgłoś recenzję"
+        message="Czy na pewno chcesz zgłosić tę recenzję? Zgłoszenie zostanie przekazane do administratora."
+        confirmText="Zgłoś"
+        cancelText="Anuluj"
+        type="warning"
+        isLoading={isReporting}
+      />
     </div>
   );
 }

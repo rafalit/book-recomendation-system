@@ -1,15 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { X, BookOpen, User, Building, Image, FileText, Tag, Copy, Calendar } from "lucide-react";
 import api from "../../lib/api";
+import { Book } from "./BookCard";
 
 type Props = {
   open: boolean;
   onClose: () => void;
-  university: string;
-  onAdded?: () => void;
+  book: Book;
+  onUpdated?: (updatedBook: Book) => void;
 };
 
-export default function BookAddModal({ open, onClose, university, onAdded }: Props) {
+export default function BookEditModal({ open, onClose, book, onUpdated }: Props) {
   const [form, setForm] = useState({
     title: "",
     authors: "",
@@ -21,6 +22,23 @@ export default function BookAddModal({ open, onClose, university, onAdded }: Pro
     available_copies: 1,
     published_date: "",
   });
+
+  // Pre-fill form when book changes
+  useEffect(() => {
+    if (book) {
+      setForm({
+        title: book.title || "",
+        authors: book.authors || "",
+        isbn: book.isbn || "",
+        publisher: book.publisher || "",
+        thumbnail: book.thumbnail || "",
+        description: book.description || "",
+        categories: book.categories || "",
+        available_copies: book.available_copies || 1,
+        published_date: book.published_date || "",
+      });
+    }
+  }, [book]);
 
   if (!open) return null;
 
@@ -34,15 +52,15 @@ export default function BookAddModal({ open, onClose, university, onAdded }: Pro
         return;
     }
     try {
-        await api.post("/books/manual", { ...form, university });
-        alert("📚 Książka dodana!");
-        if (onAdded) onAdded();   
+        const updatedBook = await api.put(`/books/${book.id}`, form);
+        alert("📚 Książka zaktualizowana!");
+        if (onUpdated) onUpdated(updatedBook.data);   
         onClose();
     } catch (err) {
         console.error(err);
-        alert("❌ Błąd dodawania książki");
+        alert("❌ Błąd aktualizacji książki");
     }
-    };
+  };
 
   const FormField = ({ 
     name, 
@@ -101,11 +119,11 @@ export default function BookAddModal({ open, onClose, university, onAdded }: Pro
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="h-12 w-12 rounded-lg bg-yellow-400 text-indigo-900 dark:bg-slate-600 dark:text-slate-200 text-2xl grid place-items-center shadow">
-                📚
+                ✏️
               </div>
               <div>
-                <h2 className="text-xl font-semibold">Dodaj nową książkę</h2>
-                <p className="text-white/80 dark:text-slate-300 text-sm">Wypełnij poniższe pola aby dodać książkę do biblioteki</p>
+                <h2 className="text-xl font-semibold">Edytuj książkę</h2>
+                <p className="text-white/80 dark:text-slate-300 text-sm">Zaktualizuj informacje o książce</p>
               </div>
             </div>
             <button 
@@ -193,7 +211,7 @@ export default function BookAddModal({ open, onClose, university, onAdded }: Pro
               onClick={handleSubmit} 
               className="px-6 py-2 rounded-lg text-white bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 transition-all font-medium shadow-sm"
             >
-              Dodaj książkę
+              Zaktualizuj książkę
             </button>
           </div>
         </div>

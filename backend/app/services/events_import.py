@@ -21,6 +21,65 @@ CAL_MIME_TYPES = {"text/calendar", "application/calendar+json"}
 def _sha(s: str) -> str: return hashlib.sha256(s.encode("utf-8")).hexdigest()
 def _norm_txt(x: str | None) -> str: return (x or "").strip()
 
+def _check_global_duplicate(db: Session, title: str, start_at: datetime | None, location: str | None) -> Event | None:
+    """Sprawdź czy wydarzenie o podobnym tytule, dacie i lokalizacji już istnieje"""
+    if not title or not start_at:
+        return None
+    
+    # Szukaj wydarzeń o podobnym tytule i dacie (w ciągu 1 godziny)
+    from datetime import timedelta
+    time_window_start = start_at - timedelta(hours=1)
+    time_window_end = start_at + timedelta(hours=1)
+    
+    similar_events = db.execute(
+        select(Event).where(
+            Event.title.ilike(f"%{title[:30]}%"),  # Pierwsze 30 znaków tytułu
+            Event.start_at.between(time_window_start, time_window_end),
+            Event.status == "published"
+        )
+    ).scalars().all()
+    
+    # Sprawdź podobieństwo tytułów (prosta heurystyka)
+    title_words = set(title.lower().split())
+    for event in similar_events:
+        event_words = set(event.title.lower().split())
+        # Jeśli 70% słów się pokrywa, to prawdopodobnie duplikat
+        if len(title_words & event_words) / max(len(title_words), len(event_words)) > 0.7:
+            return event
+    
+    return None
+
+def _assign_category_from_title(title: str, default_category: str | None) -> str:
+    """Przypisz kategorię na podstawie tytułu wydarzenia"""
+    if default_category and default_category != "bilety":
+        return default_category
+    
+    title_lower = title.lower()
+    
+    # Słowa kluczowe dla różnych kategorii
+    kultura_keywords = ["wystawa", "galeria", "muzeum", "teatr", "koncert", "spektakl", "sztuka", "kultura", "artysta", "malarstwo", "rzeźba", "artystyczne"]
+    turystyka_keywords = ["wycieczka", "spacer", "zwiedzanie", "turystyka", "podróż", "wyprawa", "szlak", "trasa", "krajoznawstwo"]
+    wydarzenia_keywords = ["konferencja", "seminarium", "warsztat", "szkolenie", "spotkanie", "debata", "panel", "dyskusja", "prezentacja"]
+    
+    # Sprawdź słowa kluczowe
+    for keyword in kultura_keywords:
+        if keyword in title_lower:
+            print(f"🔍 Found kultura keyword '{keyword}' in '{title[:50]}...'")
+            return "kultura"
+    
+    for keyword in turystyka_keywords:
+        if keyword in title_lower:
+            print(f"🔍 Found turystyka keyword '{keyword}' in '{title[:50]}...'")
+            return "turystyka"
+    
+    for keyword in wydarzenia_keywords:
+        if keyword in title_lower:
+            print(f"🔍 Found wydarzenia keyword '{keyword}' in '{title[:50]}...'")
+            return "wydarzenia"
+    
+    # Domyślnie zostaw "bilety" jeśli nie pasuje do niczego
+    return default_category or "bilety"
+
 async def _safe_get(url: str, http: httpx.AsyncClient) -> httpx.Response | None:
     try:
         r = await http.get(url, headers={"Accept": "text/html,application/xhtml+xml,*/*"})
@@ -166,41 +225,116 @@ def _upsert_event_from_vevent(db: Session, ve, uni_name: str, src_url: str, defa
     if not found:
         found = db.execute(select(Event).where(Event.hash==fp)).scalar_one_or_none()
 
-    if found:
-        ev = found
-        ev.title = title or ev.title
-        ev.description = desc or ev.description
-        ev.start_at = dtstart or ev.start_at
-        ev.end_at = dtend or ev.end_at
-        ev.all_day = all_day
-        ev.location_name = loc or ev.location_name
-        ev.is_online = is_online
-        ev.meeting_url = url or ev.meeting_url
-        ev.organizer = organizer or ev.organizer
-        ev.university_name = uni_name
-        ev.category = default_category or ev.category
-        ev.source_url = src_url
+    # Dla wydarzeń książkowych, przypisz do odpowiednich uczelni na podstawie treści
+    if default_category in ["książki", "literatura"] or "książk" in (title or "").lower():
+        # 🚀 Sprawdź globalne duplikaty przed przypisaniem do uczelni
+        global_duplicate = _check_global_duplicate(db, title, dtstart, loc)
+        if global_duplicate:
+            print(f"🚫 Pominięto duplikat: {title[:50]}... (już istnieje: {global_duplicate.title[:50]}...)")
+            return
+        
+        from ..api.routes_events import assign_event_to_universities
+        assigned_universities = assign_event_to_universities(title, desc, organizer, loc)
+        
+        # 🚀 Sprawdź czy wydarzenie już istnieje w bazie (niezależnie od uczelni)
+        existing_global = db.execute(
+            select(Event).where(
+                Event.title.ilike(f"%{title[:30]}%"),
+                Event.start_at == dtstart,
+                Event.status == "published"
+            )
+        ).scalar_one_or_none()
+        
+        if existing_global:
+            print(f"🚫 Pominięto duplikat globalny: {title[:50]}... (już istnieje: {existing_global.title[:50]}...)")
+            return
+        
+        # Utwórz wydarzenie dla każdej przypisanej uczelni
+        for assigned_uni in assigned_universities:
+            # 🚀 Sprawdź czy wydarzenie już istnieje dla tej uczelni
+            uni_hash = fp + "_" + assigned_uni.lower()
+            existing_event = db.execute(
+                select(Event).where(Event.hash == uni_hash)
+            ).scalar_one_or_none()
+            
+            if existing_event:
+                # Aktualizuj istniejące wydarzenie
+                existing_event.title = title or existing_event.title
+                existing_event.description = desc or existing_event.description
+                existing_event.start_at = dtstart or existing_event.start_at
+                existing_event.end_at = dtend or existing_event.end_at
+                existing_event.all_day = all_day
+                existing_event.is_online = is_online
+                existing_event.meeting_url = url or existing_event.meeting_url
+                existing_event.location_name = loc or existing_event.location_name
+                existing_event.organizer = organizer or existing_event.organizer
+                existing_event.source_url = src_url
+                existing_event.source_uid = uid or existing_event.source_uid
+                continue
+            
+            # 🚀 Przypisz różne kategorie na podstawie tytułu wydarzenia
+            assigned_category = _assign_category_from_title(title or "", default_category)
+            
+            ev = Event(
+                title=title or "(bez tytułu)",
+                description=desc or None,
+                start_at=dtstart or datetime.utcnow(),
+                end_at=dtend,
+                all_day=all_day,
+                is_online=is_online,
+                meeting_url=url or None,
+                location_name=loc or None,
+                address=None,
+                organizer=organizer or None,
+                university_name=assigned_uni,
+                category=assigned_category,
+                source_url=src_url,
+                source_type="ics",
+                source_uid=uid or None,
+                hash=uni_hash,
+                status="published",
+            )
+            db.add(ev)
     else:
-        ev = Event(
-            title=title or "(bez tytułu)",
-            description=desc or None,
-            start_at=dtstart or datetime.utcnow(),
-            end_at=dtend,
-            all_day=all_day,
-            is_online=is_online,
-            meeting_url=url or None,
-            location_name=loc or None,
-            address=None,
-            organizer=organizer or None,
-            university_name=uni_name,
-            category=default_category,
-            source_url=src_url,
-            source_type="ics",
-            source_uid=uid or None,
-            hash=fp,
-            status="published",
-        )
-        db.add(ev)
+        # 🚀 Przypisz kategorię na podstawie tytułu dla wszystkich wydarzeń
+        assigned_category = _assign_category_from_title(title or "", default_category)
+        
+        if found:
+            ev = found
+            ev.title = title or ev.title
+            ev.description = desc or ev.description
+            ev.start_at = dtstart or ev.start_at
+            ev.end_at = dtend or ev.end_at
+            ev.all_day = all_day
+            ev.location_name = loc or ev.location_name
+            ev.is_online = is_online
+            ev.meeting_url = url or ev.meeting_url
+            ev.organizer = organizer or ev.organizer
+            ev.university_name = uni_name
+            ev.category = assigned_category or ev.category
+            ev.source_url = src_url
+        else:
+            ev = Event(
+                title=title or "(bez tytułu)",
+                description=desc or None,
+                start_at=dtstart or datetime.utcnow(),
+                end_at=dtend,
+                all_day=all_day,
+                is_online=is_online,
+                meeting_url=url or None,
+                location_name=loc or None,
+                address=None,
+                organizer=organizer or None,
+                university_name=uni_name,
+                category=assigned_category,
+                source_url=src_url,
+                source_type="ics",
+                source_uid=uid or None,
+                hash=fp,
+                status="published",
+            )
+            db.add(ev)
+    
     try: db.commit()
     except IntegrityError: db.rollback()
 
@@ -215,23 +349,80 @@ def _upsert_event_from_rss(db: Session, it: dict, uni_name: str, src_url: str, d
         (dt.isoformat() if isinstance(dt, datetime) else ""),
         (link or "").lower()
     ]))
-    found = db.execute(select(Event).where(Event.hash==fp)).scalar_one_or_none()
-    if found:
-        ev = found
-        ev.description = desc or ev.description
-        ev.start_at    = dt or ev.start_at
-        ev.is_online   = is_online
-        ev.university_name = uni_name
-        ev.category    = default_category or ev.category
-        ev.source_url  = src_url
+    
+    # Dla wydarzeń książkowych, przypisz do odpowiednich uczelni na podstawie treści
+    if default_category in ["książki", "literatura"] or "książk" in title.lower():
+        # 🚀 Sprawdź globalne duplikaty przed przypisaniem do uczelni
+        global_duplicate = _check_global_duplicate(db, title, dt, None)
+        if global_duplicate:
+            print(f"🚫 Pominięto duplikat RSS: {title[:50]}... (już istnieje: {global_duplicate.title[:50]}...)")
+            return
+        
+        from ..api.routes_events import assign_event_to_universities
+        assigned_universities = assign_event_to_universities(title, desc or "", "", "")
+        
+        # 🚀 Sprawdź czy wydarzenie już istnieje w bazie (niezależnie od uczelni)
+        existing_global = db.execute(
+            select(Event).where(
+                Event.title.ilike(f"%{title[:30]}%"),
+                Event.start_at == dt,
+                Event.status == "published"
+            )
+        ).scalar_one_or_none()
+        
+        if existing_global:
+            print(f"🚫 Pominięto duplikat globalny RSS: {title[:50]}... (już istnieje: {existing_global.title[:50]}...)")
+            return
+        
+        # Utwórz wydarzenie dla każdej przypisanej uczelni
+        for assigned_uni in assigned_universities:
+            # 🚀 Sprawdź czy wydarzenie już istnieje dla tej uczelni
+            uni_hash = fp + "_" + assigned_uni.lower()
+            existing_event = db.execute(
+                select(Event).where(Event.hash == uni_hash)
+            ).scalar_one_or_none()
+            
+            if existing_event:
+                # Aktualizuj istniejące wydarzenie
+                existing_event.description = desc or existing_event.description
+                existing_event.start_at = dt or existing_event.start_at
+                existing_event.is_online = is_online
+                existing_event.source_url = src_url
+                continue
+            
+            # 🚀 Przypisz kategorię na podstawie tytułu
+            assigned_category = _assign_category_from_title(title, default_category)
+            
+            ev = Event(
+                title=title, description=desc, start_at=dt or datetime.utcnow(), end_at=None,
+                all_day=False, is_online=is_online, meeting_url=None, location_name=None, address=None,
+                organizer=None, university_name=assigned_uni, category=assigned_category,
+                source_url=src_url, source_type="rss", source_uid=None, 
+                hash=uni_hash, status="published",
+            )
+            db.add(ev)
     else:
-        ev = Event(
-            title=title, description=desc, start_at=dt or datetime.utcnow(), end_at=None,
-            all_day=False, is_online=is_online, meeting_url=None, location_name=None, address=None,
-            organizer=None, university_name=uni_name, category=default_category,
-            source_url=src_url, source_type="rss", source_uid=None, hash=fp, status="published",
-        )
-        db.add(ev)
+        # 🚀 Przypisz kategorię na podstawie tytułu dla wszystkich wydarzeń RSS
+        assigned_category = _assign_category_from_title(title, default_category)
+        
+        found = db.execute(select(Event).where(Event.hash==fp)).scalar_one_or_none()
+        if found:
+            ev = found
+            ev.description = desc or ev.description
+            ev.start_at    = dt or ev.start_at
+            ev.is_online   = is_online
+            ev.university_name = uni_name
+            ev.category    = assigned_category or ev.category
+            ev.source_url  = src_url
+        else:
+            ev = Event(
+                title=title, description=desc, start_at=dt or datetime.utcnow(), end_at=None,
+                all_day=False, is_online=is_online, meeting_url=None, location_name=None, address=None,
+                organizer=None, university_name=uni_name, category=assigned_category,
+                source_url=src_url, source_type="rss", source_uid=None, hash=fp, status="published",
+            )
+            db.add(ev)
+    
     try: db.commit()
     except IntegrityError: db.rollback()
 
@@ -270,27 +461,90 @@ def _upsert_event_from_jsonld(db: Session, ev: dict, uni_name: str, src_url: str
         ev["title"].lower(), uni_name.lower(),
         (ev["start_at"].isoformat() if isinstance(ev["start_at"], datetime) else ""),
     ]))
-    found = db.execute(select(Event).where(Event.hash==fp)).scalar_one_or_none()
-    if found:
-        rec = found
-        rec.description = ev.get("description") or rec.description
-        rec.start_at    = ev.get("start_at") or rec.start_at
-        rec.end_at      = ev.get("end_at") or rec.end_at
-        rec.is_online   = ev.get("is_online")
-        rec.location_name = ev.get("location_name") or rec.location_name
-        rec.university_name = uni_name
-        rec.category = default_category or rec.category
-        rec.source_url = src_url
-    else:
-        rec = Event(
-            title=ev["title"], description=ev.get("description"),
-            start_at=ev.get("start_at") or datetime.utcnow(), end_at=ev.get("end_at"),
-            all_day=False, is_online=ev.get("is_online", False), meeting_url=None,
-            location_name=ev.get("location_name"), address=None, organizer=None,
-            university_name=uni_name, category=default_category, source_url=src_url,
-            source_type="jsonld", source_uid=None, hash=fp, status="published",
+    
+    # Dla wydarzeń książkowych, przypisz do odpowiednich uczelni na podstawie treści
+    if default_category in ["książki", "literatura"] or "książk" in ev["title"].lower():
+        # 🚀 Sprawdź globalne duplikaty przed przypisaniem do uczelni
+        global_duplicate = _check_global_duplicate(db, ev["title"], ev.get("start_at"), ev.get("location_name"))
+        if global_duplicate:
+            print(f"🚫 Pominięto duplikat JSON-LD: {ev['title'][:50]}... (już istnieje: {global_duplicate.title[:50]}...)")
+            return
+        
+        from ..api.routes_events import assign_event_to_universities
+        assigned_universities = assign_event_to_universities(
+            ev["title"], 
+            ev.get("description") or "", 
+            "", 
+            ev.get("location_name") or ""
         )
-        db.add(rec)
+        
+        # 🚀 Sprawdź czy wydarzenie już istnieje w bazie (niezależnie od uczelni)
+        existing_global = db.execute(
+            select(Event).where(
+                Event.title.ilike(f"%{ev['title'][:30]}%"),
+                Event.start_at == ev.get("start_at"),
+                Event.status == "published"
+            )
+        ).scalar_one_or_none()
+        
+        if existing_global:
+            print(f"🚫 Pominięto duplikat globalny JSON-LD: {ev['title'][:50]}... (już istnieje: {existing_global.title[:50]}...)")
+            return
+        
+        # Utwórz wydarzenie dla każdej przypisanej uczelni
+        for assigned_uni in assigned_universities:
+            # 🚀 Sprawdź czy wydarzenie już istnieje dla tej uczelni
+            uni_hash = fp + "_" + assigned_uni.lower()
+            existing_event = db.execute(
+                select(Event).where(Event.hash == uni_hash)
+            ).scalar_one_or_none()
+            
+            if existing_event:
+                # Aktualizuj istniejące wydarzenie
+                existing_event.description = ev.get("description") or existing_event.description
+                existing_event.start_at = ev.get("start_at") or existing_event.start_at
+                existing_event.end_at = ev.get("end_at") or existing_event.end_at
+                existing_event.is_online = ev.get("is_online", existing_event.is_online)
+                existing_event.location_name = ev.get("location_name") or existing_event.location_name
+                existing_event.source_url = src_url
+                continue
+            
+            # 🚀 Przypisz kategorię na podstawie tytułu
+            assigned_category = _assign_category_from_title(ev["title"], default_category)
+            
+            rec = Event(
+                title=ev["title"], description=ev.get("description"),
+                start_at=ev.get("start_at") or datetime.utcnow(), end_at=ev.get("end_at"),
+                all_day=False, is_online=ev.get("is_online", False), meeting_url=None,
+                location_name=ev.get("location_name"), address=None, organizer=None,
+                university_name=assigned_uni, category=assigned_category, source_url=src_url,
+                source_type="jsonld", source_uid=None, 
+                hash=uni_hash, status="published",
+            )
+            db.add(rec)
+    else:
+        found = db.execute(select(Event).where(Event.hash==fp)).scalar_one_or_none()
+        if found:
+            rec = found
+            rec.description = ev.get("description") or rec.description
+            rec.start_at    = ev.get("start_at") or rec.start_at
+            rec.end_at      = ev.get("end_at") or rec.end_at
+            rec.is_online   = ev.get("is_online")
+            rec.location_name = ev.get("location_name") or rec.location_name
+            rec.university_name = uni_name
+            rec.category = default_category or rec.category
+            rec.source_url = src_url
+        else:
+            rec = Event(
+                title=ev["title"], description=ev.get("description"),
+                start_at=ev.get("start_at") or datetime.utcnow(), end_at=ev.get("end_at"),
+                all_day=False, is_online=ev.get("is_online", False), meeting_url=None,
+                location_name=ev.get("location_name"), address=None, organizer=None,
+                university_name=uni_name, category=default_category, source_url=src_url,
+                source_type="jsonld", source_uid=None, hash=fp, status="published",
+            )
+            db.add(rec)
+    
     try: db.commit()
     except IntegrityError: db.rollback()
 
@@ -341,7 +595,42 @@ async def import_events_for_university(db: Session, uni_name: str, http: httpx.A
                 except Exception:
                     continue
 
+def clean_duplicate_events(db: Session):
+    """Usuń duplikaty wydarzeń na podstawie podobieństwa tytułów i dat"""
+    from sqlalchemy import func, and_
+    
+    # Znajdź potencjalne duplikaty (te same tytuły w podobnym czasie)
+    duplicates = db.execute(
+        select(Event.title, func.count().label('count'))
+        .where(Event.status == "published")
+        .group_by(Event.title)
+        .having(func.count() > 1)
+    ).all()
+    
+    removed_count = 0
+    for title, count in duplicates:
+        # Znajdź wszystkie wydarzenia o tym tytule
+        events = db.execute(
+            select(Event).where(
+                Event.title == title,
+                Event.status == "published"
+            ).order_by(Event.updated_at.desc())
+        ).scalars().all()
+        
+        # Zostaw tylko najnowsze, usuń resztę
+        if len(events) > 1:
+            for event in events[1:]:  # Usuń wszystkie oprócz pierwszego (najnowszego)
+                db.delete(event)
+                removed_count += 1
+    
+    db.commit()
+    print(f"🧹 Usunięto {removed_count} duplikatów wydarzeń")
+    return removed_count
+
 async def import_events_all(db: Session, http: httpx.AsyncClient, sources_map: dict):
+    # Najpierw wyczyść stare duplikaty
+    clean_duplicate_events(db)
+    
     for uni_name in sources_map.keys():
         await import_events_for_university(db, uni_name, http, sources_map)
 

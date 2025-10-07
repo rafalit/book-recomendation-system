@@ -5,6 +5,7 @@ import api from "../../lib/api";
 import { addReply, fetchPost } from "../../lib/forumApi";
 import ReactionBar from "../../components/forum/ReactionBar";
 import ReportDialog from "../../components/forum/ReportDialog";
+import ConfirmDialog from "../../components/ui/ConfirmDialog";
 import { useAuth } from "../../components/auth/AuthContext";
 import { formatDateOnly } from "../../lib/formatDate";
 
@@ -35,6 +36,12 @@ type PostDetail = {
   author: Author;
   reactions: Record<string, number>;
   replies: ReplyNode[];
+  books?: Array<{
+    id: number;
+    title: string;
+    authors: string;
+    thumbnail?: string;
+  }>;
 };
 
 function LineBadge({ children, className = "" }: { children: React.ReactNode; className?: string }) {
@@ -62,10 +69,12 @@ function Reply({
   node,
   postId,
   onReload,
+  userRole,
 }: {
   node: ReplyNode;
   postId: number;
   onReload: () => void;
+  userRole?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -94,12 +103,14 @@ function Reply({
       <div className="mt-1 whitespace-pre-wrap break-words">{node.body}</div>
 
       <div className="mt-2 flex items-center gap-2">
-        <button
-          onClick={() => setOpen(true)}
-          className="text-xs px-2 py-1 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200"
-        >
-          Odpowiedz
-        </button>
+        {userRole !== "admin" && (
+          <button
+            onClick={() => setOpen(true)}
+            className="text-xs px-2 py-1 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200"
+          >
+            Odpowiedz
+          </button>
+        )}
         {hasChildren && (
           <button
             onClick={() => setExpanded((e) => !e)}
@@ -117,12 +128,12 @@ function Reply({
               {[...node.children!]
                 .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
                 .map((ch) => (
-                  <Reply key={ch.id} node={ch} postId={postId} onReload={onReload} />
+                  <Reply key={ch.id} node={ch} postId={postId} onReload={onReload} userRole={userRole} />
                 ))}
             </div>
           )}
 
-          {open && (
+          {open && userRole !== "admin" && (
             <form onSubmit={submit} className="flex gap-2">
               <input
                 value={val}
@@ -187,11 +198,20 @@ export default function ForumDetail() {
     await load();
   };
 
-  const deletePost = async () => {
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  
+  const handleDeleteConfirm = async () => {
     if (!post) return;
-    if (!window.confirm("Na pewno usunąć ten wpis?")) return;
-    await api.delete(`/forum/${post.id}`);
-    nav("/forum");
+    
+    setIsDeleting(true);
+    try {
+      await api.delete(`/forum/${post.id}`);
+      nav("/forum");
+    } catch (error) {
+      console.error("Error deleting post:", error);
+      setIsDeleting(false);
+    }
   };
 
   if (loading) return <div className="p-4 text-slate-500">Ładowanie…</div>;
@@ -205,6 +225,28 @@ export default function ForumDetail() {
       <div className={`rounded-2xl border ${frame} bg-white p-5 shadow-sm`}>
         <div className="text-2xl font-semibold break-words">{post.title}</div>
         <div className="text-slate-600 mt-1 whitespace-pre-wrap break-words">{post.summary}</div>
+
+        {/* 🔹 wyświetl powiązane książki */}
+        {post.books && post.books.length > 0 && (
+          <div className="mt-3 p-3 bg-slate-50 dark:bg-slate-700 rounded-lg">
+            <div className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              Powiązane książki:
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {post.books.map((book) => (
+                <div key={book.id} className="flex items-center gap-2 bg-white dark:bg-slate-800 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600">
+                  {book.thumbnail && (
+                    <img src={book.thumbnail} alt={book.title} className="w-8 h-8 object-cover rounded" />
+                  )}
+                  <div className="text-sm">
+                    <div className="font-medium text-slate-900 dark:text-slate-100">{book.title}</div>
+                    <div className="text-slate-600 dark:text-slate-400">{book.authors}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <AuthorLine a={post.author} />
 
@@ -220,15 +262,20 @@ export default function ForumDetail() {
             postId={post.id}
             counts={post.reactions || {}}
             onChange={(next) => setPost((p) => (p ? { ...p, reactions: next } : p))}
+            userRole={user?.role}
           />
 
           <div className="flex items-center gap-2">
             {canDelete && (
-              <button onClick={deletePost} className="px-3 py-1.5 rounded-lg bg-rose-600 text-white">
+              <button 
+                onClick={() => setShowDeleteDialog(true)} 
+                disabled={isDeleting}
+                className="px-3 py-1.5 rounded-lg bg-rose-600 text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-rose-700 transition-colors"
+              >
                 Usuń wpis
               </button>
             )}
-            {!isOwner && (
+            {!isOwner && user?.role !== "admin" && (
               <button
                 onClick={() => setShowReport(true)}
                 className="px-3 py-1.5 rounded-lg bg-rose-50 text-rose-700 border border-rose-200"
@@ -247,23 +294,25 @@ export default function ForumDetail() {
         {post.replies?.length ? (
           <div className="space-y-3">
             {post.replies.map((r) => (
-              <Reply key={r.id} node={r} postId={post.id} onReload={load} />
+              <Reply key={r.id} node={r} postId={post.id} onReload={load} userRole={user?.role} />
             ))}
           </div>
         ) : (
           <div className="text-slate-500">Brak odpowiedzi.</div>
         )}
 
-        {/* nowa odpowiedź (top-level) */}
-        <form onSubmit={submitReply} className="mt-4 flex gap-2">
-          <input
-            value={answer}
-            onChange={(e) => setAnswer(e.target.value)}
-            className="flex-1 border rounded-xl px-3 py-2"
-            placeholder="Napisz odpowiedź…"
-          />
-          <button className="px-4 rounded-xl bg-indigo-700 text-white">Wyślij</button>
-        </form>
+        {/* nowa odpowiedź (top-level) - ukryte dla adminów */}
+        {user?.role !== "admin" && (
+          <form onSubmit={submitReply} className="mt-4 flex gap-2">
+            <input
+              value={answer}
+              onChange={(e) => setAnswer(e.target.value)}
+              className="flex-1 border rounded-xl px-3 py-2"
+              placeholder="Napisz odpowiedź…"
+            />
+            <button className="px-4 rounded-xl bg-indigo-700 text-white">Wyślij</button>
+          </form>
+        )}
       </div>
 
       {showReport && (
@@ -273,6 +322,18 @@ export default function ForumDetail() {
           onReported={() => alert("Zgłoszenie wysłane.")}
         />
       )}
+
+      <ConfirmDialog
+        isOpen={showDeleteDialog}
+        onClose={() => setShowDeleteDialog(false)}
+        onConfirm={handleDeleteConfirm}
+        title="Usuń wpis"
+        message="Czy na pewno chcesz usunąć ten wpis? Ta operacja jest nieodwracalna."
+        confirmText="Usuń"
+        cancelText="Anuluj"
+        type="danger"
+        isLoading={isDeleting}
+      />
     </div>
   );
 }

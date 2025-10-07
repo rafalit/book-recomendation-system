@@ -64,6 +64,17 @@ class BookCreate(BaseModel):
     university: str
 
 
+class BookUpdate(BaseModel):
+    title: str
+    authors: str
+    publisher: Optional[str] = None
+    published_date: Optional[str] = None
+    thumbnail: Optional[str] = None
+    categories: Optional[str] = None
+    description: Optional[str] = None
+    available_copies: Optional[int] = 1
+
+
 class BookOut(BaseModel):
     id: Optional[int] = None
     google_id: Optional[str] = None

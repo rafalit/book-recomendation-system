@@ -14,12 +14,14 @@ export default function BookFilters({
   onChange,
   resultCount,
   disableAvailableToggle = false,
+  disableFavoritesToggle = false,
   categories = [],
 }: {
   value: BookFiltersValue;
   onChange: (v: BookFiltersValue) => void;
   resultCount: number;
   disableAvailableToggle?: boolean;
+  disableFavoritesToggle?: boolean;
   categories?: string[];
 }) {
   const [openCategories, setOpenCategories] = useState(false);
@@ -155,22 +157,24 @@ export default function BookFilters({
         )}
 
         {/* ⭐ toggle: tylko ulubione */}
-        <div className="flex items-center gap-3">
-          <span className="text-slate-700 dark:text-slate-300 text-sm">Tylko ulubione</span>
-          <button
-            type="button"
-            onClick={() => onChange({ ...value, favoritesOnly: !value.favoritesOnly })}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
-              value.favoritesOnly ? "bg-yellow-500" : "bg-slate-300"
-            }`}
-          >
-            <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
-                value.favoritesOnly ? "translate-x-6" : "translate-x-1"
+        {!disableFavoritesToggle && (
+          <div className="flex items-center gap-3">
+            <span className="text-slate-700 dark:text-slate-300 text-sm">Tylko ulubione</span>
+            <button
+              type="button"
+              onClick={() => onChange({ ...value, favoritesOnly: !value.favoritesOnly })}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
+                value.favoritesOnly ? "bg-yellow-500" : "bg-slate-300"
               }`}
-            />
-          </button>
-        </div>
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
+                  value.favoritesOnly ? "translate-x-6" : "translate-x-1"
+                }`}
+              />
+            </button>
+          </div>
+        )}
 
         {/* licznik wyników */}
         <span className="ml-auto text-slate-600 dark:text-slate-300 text-sm">

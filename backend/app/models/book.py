@@ -25,6 +25,7 @@ class Book(Base):
     ratings = relationship("Rating", back_populates="book", cascade="all,delete")
     reviews = relationship("Review", back_populates="book", cascade="all,delete")
     loans = relationship("Loan", back_populates="book", cascade="all,delete")
+    forum_posts = relationship("ForumPost", secondary="forum_post_books", back_populates="books")
 
 
 class Rating(Base):

@@ -243,11 +243,12 @@ def reply_delete(
 @router.get("")
 def list_posts(
     db: Session = Depends(get_db),
+    current: User = Depends(get_current_user),
     q: str | None = None, topic: str | None = None, uni: str | None = None,
     sort: Literal["newest", "latest_activity"] = "newest",
     limit: int = 30, offset: int = 0
 ):
-    sel = select(ForumPost).where(ForumPost.is_deleted == False)
+    sel = select(ForumPost).options(joinedload(ForumPost.books)).where(ForumPost.is_deleted == False)
 
     if uni:
         if uni.lower() in ("ogólne", "ogolne"):
@@ -267,7 +268,7 @@ def list_posts(
         )
 
     sel = sel.order_by(ForumPost.created_at.desc())
-    rows = db.execute(sel.limit(limit).offset(offset)).scalars().all()
+    rows = db.execute(sel.limit(limit).offset(offset)).scalars().unique().all()
 
     out = []
     for p in rows:
@@ -278,6 +279,13 @@ def list_posts(
             .all()
         )
         reactions = {t: c for (t, c) in counts}
+        
+        # Sprawdź reakcję użytkownika
+        user_reaction = db.query(ForumReaction.type).filter(
+            ForumReaction.post_id == p.id,
+            ForumReaction.user_id == current.id
+        ).scalar()
+        
         out.append({
             "id": p.id,
             "title": p.title,
@@ -286,6 +294,15 @@ def list_posts(
             "topic": p.topic,
             "created_at": p.created_at,
             "university": p.university,
+            "books": [
+                {
+                    "id": book.id,
+                    "title": book.title,
+                    "authors": book.authors,
+                    "thumbnail": book.thumbnail,
+                }
+                for book in p.books
+            ],
             "author": {
                 "id": p.author.id,
                 "first_name": p.author.first_name,
@@ -295,6 +312,7 @@ def list_posts(
                 "university": p.author.university,
             },
             "reactions": reactions,
+            "user_reaction": user_reaction,
             "replies_count": db.query(func.count(ForumReply.id))
                 .filter(ForumReply.post_id == p.id,
                         ForumReply.parent_id == None,
@@ -318,9 +336,13 @@ def create_post(
     summary = (body.get("summary") or "").strip()
     text = (body.get("body") or "").strip()
     topic = (body.get("topic") or "").strip()
+    book_ids = body.get("book_ids", [])
 
     if not title or not summary or not text or not topic:
         raise HTTPException(400, "Tytuł, opis, treść i temat są wymagane.")
+    
+    if not book_ids:
+        raise HTTPException(400, "Musisz wybrać przynajmniej jedną książkę.")
 
     p = ForumPost(
         author_id=current.id, title=title, summary=summary, body=text, topic=topic,
@@ -329,12 +351,21 @@ def create_post(
     db.add(p)
     db.commit()
     db.refresh(p)
+    
+    # Dodaj powiązania z książkami
+    from app.models.book import Book
+    for book_id in book_ids:
+        book = db.get(Book, book_id)
+        if book:
+            p.books.append(book)
+    
+    db.commit()
     return {"id": p.id}
 
 
 @router.get("/{post_id}")
 def post_detail(post_id: int, db: Session = Depends(get_db)):
-    p = db.get(ForumPost, post_id)
+    p = db.query(ForumPost).options(joinedload(ForumPost.books)).filter(ForumPost.id == post_id).first()
     if not p or p.is_deleted:
         raise HTTPException(404, "Post nie istnieje")
 
@@ -354,6 +385,15 @@ def post_detail(post_id: int, db: Session = Depends(get_db)):
         "topic": p.topic,
         "created_at": p.created_at,
         "flagged": bool(post_flagged),
+        "books": [
+            {
+                "id": book.id,
+                "title": book.title,
+                "authors": book.authors,
+                "thumbnail": book.thumbnail,
+            }
+            for book in p.books
+        ],
         "author": {
             "id": p.author.id,
             "first_name": p.author.first_name,
@@ -377,18 +417,26 @@ def post_react(
     if not p or p.is_deleted:
         raise HTTPException(404, "Post nie istnieje")
 
-    t = (body.get("type") or "").strip()
-    if t not in REACTION_EMOJI:
+    t = body.get("type")
+    if t is not None and t not in REACTION_EMOJI:
         raise HTTPException(400, "Nieznana reakcja")
 
     rec = db.query(ForumReaction).filter(
         ForumReaction.post_id == post_id,
         ForumReaction.user_id == current.id
     ).one_or_none()
-    if rec:
-        rec.type = t
+    
+    if t is None:
+        # Usuń reakcję
+        if rec:
+            db.delete(rec)
     else:
-        db.add(ForumReaction(post_id=post_id, user_id=current.id, type=t))
+        # Dodaj lub zmień reakcję
+        if rec:
+            rec.type = t
+        else:
+            db.add(ForumReaction(post_id=post_id, user_id=current.id, type=t))
+    
     db.commit()
 
     if p.author_id != current.id:
@@ -407,7 +455,14 @@ def post_react(
     counts = dict(db.query(ForumReaction.type, func.count("*"))
                   .filter(ForumReaction.post_id == post_id)
                   .group_by(ForumReaction.type).all())
-    return {"counts": counts}
+    
+    # Sprawdź reakcję użytkownika po aktualizacji
+    user_reaction = db.query(ForumReaction.type).filter(
+        ForumReaction.post_id == post_id,
+        ForumReaction.user_id == current.id
+    ).scalar()
+    
+    return {"counts": counts, "user_reaction": user_reaction}
 
 
 @router.post("/{post_id}/reply")

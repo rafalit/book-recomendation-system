@@ -23,7 +23,7 @@ export default function EventFilters({
     <section className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-600 p-4">
       <div className="flex items-center gap-2 mb-3">
         <Filter size={18} className="text-indigo-700 dark:text-indigo-400" />
-        <h2 className="text-slate-800 dark:text-slate-200 font-semibold">Filtry</h2>
+        <h2 className="text-slate-800 dark:text-slate-200 font-semibold">Wydarzenia o książkach</h2>
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
@@ -32,7 +32,7 @@ export default function EventFilters({
           <input
             value={value.query}
             onChange={(e) => onChange({ ...value, query: e.target.value })}
-            placeholder="Szukaj wydarzeń"
+            placeholder="Szukaj wydarzeń o książkach"
             className="h-10 w-72 pl-9 rounded-lg bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 px-3 outline-none focus:ring-4 focus:ring-indigo-100 dark:focus:ring-indigo-900"
           />
         </div>

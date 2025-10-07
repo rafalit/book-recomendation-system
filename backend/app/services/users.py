@@ -13,7 +13,7 @@ def _uni_from_email(email: str) -> str | None:
 
 def create_user(payload, db: Session) -> models.User:
     # 1) Weryfikacja roli
-    if payload.role not in ("student", "researcher"):
+    if payload.role not in ("student", "researcher", "admin"):
         raise HTTPException(400, "Nieobsługiwana rola.")
 
     # 2) Email lower + domena → uczelnia
@@ -32,8 +32,8 @@ def create_user(payload, db: Session) -> models.User:
         raise HTTPException(400, "Wydział nie należy do wskazanej uczelni.")
 
     # 5) Walidacja imienia/nazwiska i hasła
-    auth.validate_first_last(payload.first_name, payload.last_name)
-    auth.validate_password_strength(payload.password)
+    auth.validate_first_last(payload.first_name, payload.last_name, payload.email)
+    auth.validate_password_strength(payload.password, payload.email)
 
     # 6) Specyficzne wymagania
     if payload.role == "student":

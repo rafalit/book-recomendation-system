@@ -7,10 +7,15 @@ type Props = {
   disableLoan?: boolean;
   user?: { id: number; role: string };
   onDeleted?: (id: number) => void;
+  onUpdated?: (updatedBook: Book) => void;
   loans?: Loan[];             
   refreshLoans?: () => void;   
   favorites?: Set<number>;
   onToggleFavorite?: (bookId: number) => void;
+  selectedBookIds?: Set<number>; // 🔹 wybrane książki do forum
+  onToggleBookSelection?: (bookId: number) => void; // 🔹 callback do wyboru książki
+  selectedBook?: Book | null; // 🔹 wybrana książka do szczegółów
+  setSelectedBook?: (book: Book | null) => void; // 🔹 callback do wyboru książki do szczegółów
 };
 
 export default function BookList({
@@ -19,10 +24,15 @@ export default function BookList({
   disableLoan = false,
   user,
   onDeleted,
+  onUpdated,
   loans = [],
   refreshLoans,
   favorites,
   onToggleFavorite,
+  selectedBookIds,
+  onToggleBookSelection,
+  selectedBook,
+  setSelectedBook,
 }: Props) {
   if (loading) {
     return (
@@ -44,7 +54,7 @@ export default function BookList({
   if (!items.length) {
     return (
       <div className="p-6 text-center text-slate-500">
-        Brak książek do wyświetlenia.
+        Ładowanie książek...
       </div>
     );
   }
@@ -60,8 +70,13 @@ export default function BookList({
           loan={loans.find((l) => l.book_id === b.id)}  // 🔹 przekazujemy całe wypożyczenie
           refreshLoans={refreshLoans}
           onDeleted={onDeleted}
+          onUpdated={onUpdated}
           isFavorite={favorites?.has(b.id)}
           onToggleFavorite={onToggleFavorite}
+          isSelected={selectedBookIds?.has(b.id)}
+          onToggleSelection={onToggleBookSelection}
+          selectedBook={selectedBook}
+          setSelectedBook={setSelectedBook}
         />
       ))}
     </div>

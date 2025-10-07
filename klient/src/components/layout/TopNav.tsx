@@ -1,6 +1,6 @@
 // src/components/TopNav.tsx
 import { useEffect, useRef, useState } from "react";
-import { Bell, ChevronDown, LogOut, User, Sun, Moon } from "lucide-react";
+import { Bell, ChevronDown, LogOut, User, Sun, Moon, Settings } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import useNotifications from "../../hooks/useNotifications";
@@ -17,6 +17,12 @@ const links = [
 
 function displayName(u: any): string {
   if (!u) return "Profil";
+  
+  // Dla administratorów pokazuj tylko imię
+  if (u.role === "admin") {
+    return u.first_name || "Admin";
+  }
+  
   return (
     u.full_name ||
     [u.first_name, u.last_name].filter(Boolean).join(" ") ||
@@ -141,14 +147,27 @@ export default function TopNav() {
   "
             role="menu"
           >
-            <Link
-              to="/profile"
-              className="flex items-center gap-2 px-4 py-3 hover:bg-white/10 dark:hover:bg-slate-600/50 transition"
-              role="menuitem"
-            >
-              <User size={18} className="opacity-90" />
-              <span className="font-medium">Profil użytkownika</span>
-            </Link>
+            {user?.role !== "admin" && (
+              <Link
+                to="/profile"
+                className="flex items-center gap-2 px-4 py-3 hover:bg-white/10 dark:hover:bg-slate-600/50 transition"
+                role="menuitem"
+              >
+                <User size={18} className="opacity-90" />
+                <span className="font-medium">Profil użytkownika</span>
+              </Link>
+            )}
+
+            {user?.role === "admin" && (
+              <Link
+                to="/admin"
+                className="flex items-center gap-2 px-4 py-3 hover:bg-white/10 dark:hover:bg-slate-600/50 transition"
+                role="menuitem"
+              >
+                <Settings size={18} className="opacity-90" />
+                <span className="font-medium">Panel administracyjny</span>
+              </Link>
+            )}
 
             <div className="h-px bg-white/15 dark:bg-slate-600/50" />
 

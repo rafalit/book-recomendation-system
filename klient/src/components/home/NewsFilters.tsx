@@ -41,7 +41,7 @@ export default function NewsFilters({
     <section className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-600 p-4">
       <div className="flex items-center gap-2 mb-3">
         <Filter size={18} className="text-indigo-700 dark:text-indigo-400" />
-        <h2 className="text-slate-800 dark:text-slate-200 font-semibold">Filtry wyszukiwania</h2>
+        <h2 className="text-slate-800 dark:text-slate-200 font-semibold">Aktualności o książkach i nauce</h2>
       </div>
 
       <div className="flex flex-wrap items-center gap-3">

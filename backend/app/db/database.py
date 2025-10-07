@@ -2,8 +2,11 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.ext.declarative import declarative_base
 import os
-from dotenv import load_dotenv; load_dotenv()
+from dotenv import load_dotenv
+
+load_dotenv()
 DATABASE_URL = os.getenv("DATABASE_URL")
+print(f"DEBUG: DATABASE_URL = {DATABASE_URL}")
 
 engine = create_engine(DATABASE_URL)
 print("DB URL at runtime:", engine.url.render_as_string(hide_password=True))

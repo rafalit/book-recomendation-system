@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import TopNav from "../components/layout/TopNav";
 import api from "../lib/api";
+import { useMyLoans } from "../hooks/useMyLoans";
+import { Loan } from "../types/loan";
 import EventCard, { EventItem } from "../components/events/EventCard";
 
 type User = {
@@ -8,6 +10,7 @@ type User = {
     first_name: string;
     last_name: string;
     email: string;
+    role: string;
     university?: string | null;
     faculty?: string | null;
     field?: string | null;
@@ -23,18 +26,6 @@ type Book = {
     thumbnail?: string;
 };
 
-type Loan = {
-    id: number;
-    start_date: string;
-    due_date: string;
-    returned_at?: string | null;
-    book: {
-        id: number;
-        title: string;
-        authors: string;
-        thumbnail?: string;
-    };
-};
 
 type Event = {
     id: number;
@@ -56,7 +47,6 @@ export default function ProfilePage() {
     const [user, setUser] = useState<User | null>(null);
     const [myBooks, setMyBooks] = useState<Book[]>([]);
     const [events, setEvents] = useState<Event[]>([]);
-    const [loans, setLoans] = useState<Loan[]>([]);
     const [favBooks, setFavBooks] = useState<Book[]>([]);
 
     const [openAbout, setOpenAbout] = useState(false);
@@ -65,14 +55,20 @@ export default function ProfilePage() {
     const [openMyBooks, setOpenMyBooks] = useState(false);
     const [openEvents, setOpenEvents] = useState(false);
 
+    // Użyj hooka useMyLoans dla spójności z resztą aplikacji
+    const { loans, refresh: refreshLoans } = useMyLoans();
+
     useEffect(() => {
         const fetchAll = async () => {
             try {
                 const u = await api.get<User>("/auth/me");
                 setUser(u.data);
 
-                const loansRes = await api.get<Loan[]>("/books/loans/me");
-                setLoans(loansRes.data);
+                // Jeśli użytkownik to admin, nie ładuj danych związanych z wypożyczeniami i książkami
+                if (u.data.role === "admin") {
+                    return; // Tylko informacje o użytkowniku
+                }
+
 
                 const added = await api.get<Book[]>("/books/mine");
                 setMyBooks(added.data);
@@ -80,9 +76,10 @@ export default function ProfilePage() {
                 const ev = await api.get<EventItem[]>("/events/mine");
                 setEvents(ev.data);
 
-                // ulubione z localStorage
+                // ulubione z localStorage - per użytkownik
                 try {
-                    const raw = localStorage.getItem("favoriteBookIds");
+                    const userId = u.data.id;
+                    const raw = localStorage.getItem(`favoriteBookIds_${userId}`);
                     const ids: number[] = raw ? JSON.parse(raw) : [];
                     if (ids.length) {
                         const limited = ids.slice(0, 50);
@@ -130,151 +127,159 @@ export default function ProfilePage() {
                     )}
                 </section>
 
-                {/* Ulubione książki (collapsible) */}
-                <section className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-0 mb-6 border dark:border-slate-600">
-                    <button className="w-full flex items-center justify-between px-6 py-4" onClick={() => setOpenFavs((o) => !o)}>
-                        <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">⭐ Ulubione książki</h2>
-                        <span className="text-sm text-slate-500 dark:text-slate-400">{openFavs ? "Zwiń" : "Rozwiń"}</span>
-                    </button>
-                    {openFavs && (
-                        <div className="px-6 pb-6">
-                            {favBooks.length ? (
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                                    {favBooks.map((b) => (
-                                        <div key={b.id} className="bg-white dark:bg-slate-700 rounded-xl shadow-sm border border-slate-200 dark:border-slate-600 overflow-hidden hover:shadow-md transition">
-                                            <div className="relative w-full pt-[80%] bg-slate-100 dark:bg-slate-600">
-                                                {b.thumbnail ? (
-                                                    <img src={b.thumbnail} alt={b.title} className="absolute top-0 left-0 w-full h-full object-contain" />
-                                                ) : (
-                                                    <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center text-4xl text-slate-400 dark:text-slate-500">📖</div>
-                                                )}
+                {/* Ulubione książki (collapsible) - ukryte dla adminów */}
+                {user?.role !== "admin" && (
+                    <section className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-0 mb-6 border dark:border-slate-600">
+                        <button className="w-full flex items-center justify-between px-6 py-4" onClick={() => setOpenFavs((o) => !o)}>
+                            <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">⭐ Ulubione książki</h2>
+                            <span className="text-sm text-slate-500 dark:text-slate-400">{openFavs ? "Zwiń" : "Rozwiń"}</span>
+                        </button>
+                        {openFavs && (
+                            <div className="px-6 pb-6">
+                                {favBooks.length ? (
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                                        {favBooks.map((b) => (
+                                            <div key={b.id} className="bg-white dark:bg-slate-700 rounded-xl shadow-sm border border-slate-200 dark:border-slate-600 overflow-hidden hover:shadow-md transition">
+                                                <div className="relative w-full pt-[80%] bg-slate-100 dark:bg-slate-600">
+                                                    {b.thumbnail ? (
+                                                        <img src={b.thumbnail} alt={b.title} className="absolute top-0 left-0 w-full h-full object-contain" />
+                                                    ) : (
+                                                        <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center text-4xl text-slate-400 dark:text-slate-500">📖</div>
+                                                    )}
+                                                </div>
+                                                <div className="p-4">
+                                                    <div className="text-sm font-semibold text-slate-900 dark:text-slate-100 line-clamp-2">{b.title}</div>
+                                                    <div className="text-xs text-slate-600 dark:text-slate-300 line-clamp-1">{b.authors}</div>
+                                                </div>
                                             </div>
-                                            <div className="p-4">
-                                                <div className="text-sm font-semibold text-slate-900 dark:text-slate-100 line-clamp-2">{b.title}</div>
-                                                <div className="text-xs text-slate-600 dark:text-slate-300 line-clamp-1">{b.authors}</div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <p className="text-slate-500 dark:text-slate-400">Brak ulubionych książek.</p>
-                            )}
-                        </div>
-                    )}
-                </section>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="text-slate-500 dark:text-slate-400">Brak ulubionych książek.</p>
+                                )}
+                            </div>
+                        )}
+                    </section>
+                )}
 
-                {/* Sekcja wypożyczone książki (collapsible) */}
-                <section className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-0 mb-6 border dark:border-slate-600">
-                    <button className="w-full flex items-center justify-between px-6 py-4" onClick={() => setOpenLoans((o) => !o)}>
-                        <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">📚 Moje wypożyczenia</h2>
-                        <span className="text-sm text-slate-500 dark:text-slate-400">{openLoans ? "Zwiń" : "Rozwiń"}</span>
-                    </button>
-                    {openLoans && (
-                        <div className="px-6 pb-6">
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                        {loans.map((l) => (
-                            <div
-                                key={l.id}
-                                className="bg-white dark:bg-slate-700 rounded-xl shadow-sm border border-slate-200 dark:border-slate-600 overflow-hidden hover:shadow-md transition flex flex-col"
-                            >
-                                <div className="relative w-full pt-[80%] bg-slate-100 dark:bg-slate-600">
-                                    {l.book?.thumbnail ? (
-                                        <img
-                                            src={l.book.thumbnail}
-                                            alt={l.book.title}
-                                            className="absolute top-0 left-0 w-full h-full object-contain"
-                                        />
-                                    ) : (
-                                        <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center text-4xl text-slate-400 dark:text-slate-500">
-                                            📖
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="p-4 flex-1 flex flex-col">
-                                    <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100 mb-1 line-clamp-2">
-                                        {l.book?.title}
-                                    </h3>
-                                    <p className="text-xs text-slate-600 dark:text-slate-300 mb-2 line-clamp-1">{l.book?.authors}</p>
-                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-auto">
-                                        od {new Date(l.start_date).toLocaleDateString("pl-PL")}
-                                        {l.due_date && (
-                                            <> – do {new Date(l.due_date).toLocaleDateString("pl-PL")}</>
+                {/* Sekcja wypożyczone książki (collapsible) - ukryte dla adminów */}
+                {user?.role !== "admin" && (
+                    <section className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-0 mb-6 border dark:border-slate-600">
+                        <button className="w-full flex items-center justify-between px-6 py-4" onClick={() => setOpenLoans((o) => !o)}>
+                            <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">📚 Moje wypożyczenia</h2>
+                            <span className="text-sm text-slate-500 dark:text-slate-400">{openLoans ? "Zwiń" : "Rozwiń"}</span>
+                        </button>
+                        {openLoans && (
+                            <div className="px-6 pb-6">
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                            {loans.map((l) => (
+                                <div
+                                    key={l.id}
+                                    className="bg-white dark:bg-slate-700 rounded-xl shadow-sm border border-slate-200 dark:border-slate-600 overflow-hidden hover:shadow-md transition flex flex-col"
+                                >
+                                    <div className="relative w-full pt-[80%] bg-slate-100 dark:bg-slate-600">
+                                        {l.book?.thumbnail ? (
+                                            <img
+                                                src={l.book.thumbnail}
+                                                alt={l.book.title}
+                                                className="absolute top-0 left-0 w-full h-full object-contain"
+                                            />
+                                        ) : (
+                                            <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center text-4xl text-slate-400 dark:text-slate-500">
+                                                📖
+                                            </div>
                                         )}
-                                    </p>
+                                    </div>
+                                    <div className="p-4 flex-1 flex flex-col">
+                                        <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100 mb-1 line-clamp-2">
+                                            {l.book?.title}
+                                        </h3>
+                                        <p className="text-xs text-slate-600 dark:text-slate-300 mb-2 line-clamp-1">{l.book?.authors}</p>
+                                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-auto">
+                                            od {new Date(l.start_date).toLocaleDateString("pl-PL")}
+                                            {l.due_date && (
+                                                <> – do {new Date(l.due_date).toLocaleDateString("pl-PL")}</>
+                                            )}
+                                        </p>
+                                    </div>
+                                </div>
+                            ))}
                                 </div>
                             </div>
-                        ))}
+                        )}
+                    </section>
+                )}
+
+                {/* Sekcja dodane książki (collapsible) - ukryte dla adminów */}
+                {user?.role !== "admin" && (
+                    <section className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-0 mb-6 border dark:border-slate-600">
+                        <button className="w-full flex items-center justify-between px-6 py-4" onClick={() => setOpenMyBooks((o) => !o)}>
+                            <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">➕ Dodane przeze mnie książki</h2>
+                            <span className="text-sm text-slate-500 dark:text-slate-400">{openMyBooks ? "Zwiń" : "Rozwiń"}</span>
+                        </button>
+                        {openMyBooks && (
+                            <div className="px-6 pb-6">
+                                {myBooks.length > 0 ? (
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                                        {myBooks.map((b) => (
+                                            <div
+                                                key={b.id}
+                                                className="bg-white dark:bg-slate-700 rounded-xl shadow-sm border border-slate-200 dark:border-slate-600 overflow-hidden hover:shadow-md transition flex flex-col"
+                                            >
+                                                <div className="relative w-full pt-[80%] bg-slate-100 dark:bg-slate-600">
+                                                    {b.thumbnail ? (
+                                                        <img
+                                                            src={b.thumbnail}
+                                                            alt={b.title}
+                                                            className="absolute top-0 left-0 w-full h-full object-contain"
+                                                        />
+                                                    ) : (
+                                                        <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center text-4xl text-slate-400 dark:text-slate-500">
+                                                            📖
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="p-4 flex-1 flex flex-col">
+                                                    <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100 mb-1 line-clamp-2">
+                                                        {b.title}
+                                                    </h3>
+                                                    <p className="text-xs text-slate-600 dark:text-slate-300 line-clamp-1">
+                                                        {b.authors}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="text-slate-500 dark:text-slate-400">Nie dodałeś jeszcze żadnych książek.</p>
+                                )}
                             </div>
-                        </div>
-                    )}
-                </section>
+                        )}
+                    </section>
+                )}
 
-                {/* Sekcja dodane książki (collapsible) */}
-                <section className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-0 mb-6 border dark:border-slate-600">
-                    <button className="w-full flex items-center justify-between px-6 py-4" onClick={() => setOpenMyBooks((o) => !o)}>
-                        <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">➕ Dodane przeze mnie książki</h2>
-                        <span className="text-sm text-slate-500 dark:text-slate-400">{openMyBooks ? "Zwiń" : "Rozwiń"}</span>
-                    </button>
-                    {openMyBooks && (
-                        <div className="px-6 pb-6">
-                            {myBooks.length > 0 ? (
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                                    {myBooks.map((b) => (
-                                        <div
-                                            key={b.id}
-                                            className="bg-white dark:bg-slate-700 rounded-xl shadow-sm border border-slate-200 dark:border-slate-600 overflow-hidden hover:shadow-md transition flex flex-col"
-                                        >
-                                            <div className="relative w-full pt-[80%] bg-slate-100 dark:bg-slate-600">
-                                                {b.thumbnail ? (
-                                                    <img
-                                                        src={b.thumbnail}
-                                                        alt={b.title}
-                                                        className="absolute top-0 left-0 w-full h-full object-contain"
-                                                    />
-                                                ) : (
-                                                    <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center text-4xl text-slate-400 dark:text-slate-500">
-                                                        📖
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <div className="p-4 flex-1 flex flex-col">
-                                                <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100 mb-1 line-clamp-2">
-                                                    {b.title}
-                                                </h3>
-                                                <p className="text-xs text-slate-600 dark:text-slate-300 line-clamp-1">
-                                                    {b.authors}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <p className="text-slate-500 dark:text-slate-400">Nie dodałeś jeszcze żadnych książek.</p>
-                            )}
-                        </div>
-                    )}
-                </section>
-
-                {/* Wydarzenia (collapsible) */}
-                <section className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-0 mb-6 border dark:border-slate-600">
-                    <button className="w-full flex items-center justify-between px-6 py-4" onClick={() => setOpenEvents((o) => !o)}>
-                        <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">📅 Moje wydarzenia</h2>
-                        <span className="text-sm text-slate-500 dark:text-slate-400">{openEvents ? "Zwiń" : "Rozwiń"}</span>
-                    </button>
-                    {openEvents && (
-                        <div className="px-6 pb-6">
-                            {events.length > 0 ? (
-                                <div className="space-y-3">
-                                    {events.map((e) => (
-                                        <EventCard key={e.id} ev={e} readOnly />  
-                                    ))}
-                                </div>
-                            ) : (
-                                <p className="text-slate-500 dark:text-slate-400">Nie zapisałeś się jeszcze na żadne wydarzenie.</p>
-                            )}
-                        </div>
-                    )}
-                </section>
+                {/* Wydarzenia (collapsible) - ukryte dla adminów */}
+                {user?.role !== "admin" && (
+                    <section className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-0 mb-6 border dark:border-slate-600">
+                        <button className="w-full flex items-center justify-between px-6 py-4" onClick={() => setOpenEvents((o) => !o)}>
+                            <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">📅 Moje wydarzenia</h2>
+                            <span className="text-sm text-slate-500 dark:text-slate-400">{openEvents ? "Zwiń" : "Rozwiń"}</span>
+                        </button>
+                        {openEvents && (
+                            <div className="px-6 pb-6">
+                                {events.length > 0 ? (
+                                    <div className="space-y-3">
+                                        {events.map((e) => (
+                                            <EventCard key={e.id} ev={e} readOnly />  
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="text-slate-500 dark:text-slate-400">Nie zapisałeś się jeszcze na żadne wydarzenie.</p>
+                                )}
+                            </div>
+                        )}
+                    </section>
+                )}
             </div>
         </div>
     );

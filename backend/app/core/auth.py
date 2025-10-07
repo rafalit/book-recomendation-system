@@ -3,7 +3,7 @@ import os
 from datetime import datetime, timedelta
 from typing import Optional
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
@@ -64,17 +64,46 @@ async def get_current_user(
         raise credentials_exc
     return user
 
+# --- dependency: optional current user from Bearer token ---
+async def get_current_user_optional(
+    request: Request,
+    db: Session = Depends(get_db),
+) -> Optional[models.User]:
+    authorization: str = request.headers.get("Authorization")
+    if not authorization or not authorization.startswith("Bearer "):
+        return None
+    
+    token = authorization[7:]
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        email: str = payload.get("sub")
+        if not email:
+            return None
+    except JWTError:
+        return None
+
+    user = get_user_by_email(db, email=email)
+    return user
+
 # --- walidacje z Twoich reguł ( używane w users.py ) ---
 import re
 NAME_RE = re.compile(r"^[A-ZĄĆĘŁŃÓŚŻŹ][a-ząćęłńóśżź-]*$")
 
-def validate_first_last(first: str, last: str):
+def validate_first_last(first: str, last: str, user_email: str = None):
+    # Admin nie jest weryfikowany
+    if user_email and user_email.lower() == "admin@admin.pl":
+        return
+    
     if not NAME_RE.fullmatch(first):
         raise HTTPException(status_code=400, detail="Niepoprawne imię (tylko litery, 1 wielka na początku).")
     if not NAME_RE.fullmatch(last):
         raise HTTPException(status_code=400, detail="Niepoprawne nazwisko (tylko litery, 1 wielka na początku).")
 
-def validate_password_strength(password: str):
+def validate_password_strength(password: str, user_email: str = None):
+    # Admin nie jest weryfikowany
+    if user_email and user_email.lower() == "admin@admin.pl":
+        return
+        
     if len(password) < 8:
         raise HTTPException(status_code=400, detail="Hasło musi mieć co najmniej 8 znaków.")
     if not re.search(r"[0-9]", password):

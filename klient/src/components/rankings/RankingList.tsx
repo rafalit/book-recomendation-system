@@ -27,7 +27,7 @@ export default function RankingList({ items, loading }: Props) {
   if (!items.length) {
     return (
       <div className="p-6 text-center text-slate-500">
-        Brak książek do wyświetlenia.
+        Ładowanie książek...
       </div>
     );
   }

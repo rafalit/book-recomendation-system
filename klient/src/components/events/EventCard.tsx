@@ -60,8 +60,16 @@ export default function EventCard({
     if (readOnly) return; // 🚫 tryb tylko-do-odczytu
     try {
       setPending(state);
-      await api.post(`/events/${ev.id}/rsvp`, { state });
-      setMyState(state); // 🔄 od razu aktualizujemy stan lokalny
+      
+      // Jeśli użytkownik już ma ten stan, odzanacz go (usuń RSVP)
+      if (myState === state) {
+        await api.delete(`/events/${ev.id}/rsvp`);
+        setMyState(null); // 🔄 usuń stan lokalny
+      } else {
+        // Jeśli użytkownik nie ma tego stanu lub ma inny, ustaw nowy
+        await api.post(`/events/${ev.id}/rsvp`, { state });
+        setMyState(state); // 🔄 ustaw nowy stan lokalny
+      }
     } finally {
       setPending(null);
     }
@@ -106,7 +114,7 @@ export default function EventCard({
                     ? "bg-green-600 dark:bg-green-700 text-white"
                     : "bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-600"
                 }`}
-              title="Wezmę udział"
+              title={myState === "going" ? "Odzanacz udział" : "Wezmę udział"}
             >
               <CheckCircle2 size={16} />{" "}
               {myState === "going" ? "Bierzesz udział" : "Wezmę udział"}
@@ -121,7 +129,7 @@ export default function EventCard({
                     ? "bg-yellow-500 dark:bg-yellow-600 text-white"
                     : "bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-600"
                 }`}
-              title="Zainteresowany"
+              title={myState === "interested" ? "Odzanacz zainteresowanie" : "Zainteresowany"}
             >
               <Star size={16} />{" "}
               {myState === "interested" ? "Jesteś zainteresowany" : "Zainteresowany"}

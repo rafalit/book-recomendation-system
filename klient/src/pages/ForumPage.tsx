@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import TopNav from "../components/layout/TopNav";
 import UniversitySidebar from "../components/home/UniversitySidebar";
+import ConfirmDialog from "../components/ui/ConfirmDialog";
 import api from "../lib/api";
 import { reactToReply, reportReply, deleteReply } from "../lib/forumApi";
 import {
@@ -19,6 +21,7 @@ import {
 import { useAuth } from "../components/auth/AuthContext";
 import { P } from "framer-motion/dist/types.d-Cjd591yU";
 import { formatDateOnly } from "../lib/formatDate";
+import PostCard from "../components/forum/PostCard";
 
 type Config = { university_faculties: Record<string, string[]> };
 
@@ -39,10 +42,24 @@ type Post = {
     university?: string | null;
   };
   reactions: Record<string, number>;
+  user_reaction?: string | null;
   replies_count: number;
+  books?: Array<{
+    id: number;
+    title: string;
+    authors: string;
+    thumbnail?: string;
+  }>;
 };
 
-const TOPICS = ["AI", "Energetyka", "Dydaktyka", "Stypendia", "Ogłoszenia"];
+const TOPICS = [
+  "Dyskusja o książce",
+  "Recenzja", 
+  "Pytanie o książkę",
+  "Rekomendacja",
+  "Wymiana książek",
+  "Ogłoszenia"
+];
 
 const PAGE_SIZE = 5;
 
@@ -57,6 +74,7 @@ const REACTIONS = [
 
 export default function ForumPage() {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
 
   const [cfg, setCfg] = useState<Config | null>(null);
   const [selectedUni, setSelectedUni] = useState<string>("wszystkie");
@@ -74,6 +92,17 @@ export default function ForumPage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  
+  // 🔹 wybrane książki z URL
+  const selectedBookIds = useMemo(() => {
+    const bookIds = searchParams.get('book_ids');
+    return bookIds ? bookIds.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id)) : [];
+  }, [searchParams]);
+  
+  const selectedBookTitles = useMemo(() => {
+    const bookTitles = searchParams.get('book_titles');
+    return bookTitles ? bookTitles.split(',') : [];
+  }, [searchParams]);
 
   useEffect(() => {
     api
@@ -95,6 +124,13 @@ export default function ForumPage() {
   useEffect(() => {
     setFormUni(selectedUni !== "wszystkie" ? selectedUni : "Ogólne");
   }, [selectedUni]);
+
+  // 🔹 automatycznie otwórz formularz gdy są wybrane książki
+  useEffect(() => {
+    if (selectedBookIds.length > 0 && user?.role !== "admin") {
+      setOpenComposer(true);
+    }
+  }, [selectedBookIds, user?.role]);
 
   useEffect(() => {
     setPage(1);
@@ -127,10 +163,27 @@ export default function ForumPage() {
     setHasMore(newPosts.length === PAGE_SIZE);
   };
 
+  const handleCloseComposer = () => {
+    setOpenComposer(false);
+    // Resetuj formularz i wyczyść URL z wybranych książek
+    setTitle("");
+    setSummary("");
+    setFormTopic("");
+    // Usuń parametry książek z URL
+    const newUrl = new URL(window.location.href);
+    newUrl.searchParams.delete('book_ids');
+    newUrl.searchParams.delete('book_titles');
+    window.history.replaceState({}, '', newUrl.toString());
+  };
+
   const createPost = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !summary.trim() || !formTopic.trim()) {
       alert("Tytuł, krótki opis i temat są wymagane.");
+      return;
+    }
+    if (selectedBookIds.length === 0) {
+      alert("Musisz wybrać przynajmniej jedną książkę.");
       return;
     }
     await api.post("/forum", {
@@ -139,25 +192,64 @@ export default function ForumPage() {
       body: summary.trim(),
       topic: formTopic.trim(),
       university: formUni || "Ogólne",
+      book_ids: selectedBookIds,
     });
     setTitle("");
     setSummary("");
     setFormTopic("");
     setOpenComposer(false);
+    // Usuń parametry książek z URL po zapisaniu
+    const newUrl = new URL(window.location.href);
+    newUrl.searchParams.delete('book_ids');
+    newUrl.searchParams.delete('book_titles');
+    window.history.replaceState({}, '', newUrl.toString());
     await refresh();
   };
 
-  const reactToPost = async (postId: number, reaction: string) => {
+  const reactToPost = async (postId: number, reaction: string | null) => {
     try {
-      await api.post(`/forum/${postId}/react`, { type: reaction });
-      await refresh();
+      const response = await api.post(`/forum/${postId}/react`, { type: reaction });
+      const { counts, user_reaction } = response.data;
+      
+      // Aktualizuj lokalny stan z danymi z serwera
+      setPosts(prev => prev.map(post => {
+        if (post.id !== postId) return post;
+        
+        return {
+          ...post,
+          reactions: counts,
+          user_reaction: user_reaction
+        };
+      }));
     } catch {}
   };
 
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [postToDelete, setPostToDelete] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  
+  // Stan dla wybranej książki
+  const [selectedBook, setSelectedBook] = useState<any>(null);
+
   const deletePost = async (postId: number) => {
-    if (!window.confirm("Usunąć wpis?")) return;
-    await api.delete(`/forum/${postId}`);
-    await refresh();
+    setPostToDelete(postId);
+    setShowDeleteDialog(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!postToDelete) return;
+    
+    setIsDeleting(true);
+    try {
+      await api.delete(`/forum/${postToDelete}`);
+      await refresh();
+      setShowDeleteDialog(false);
+      setPostToDelete(null);
+    } catch (error) {
+      console.error("Error deleting post:", error);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const roleBorder = (role: string) =>
@@ -177,7 +269,7 @@ export default function ForumPage() {
   return (
     <div className="h-screen overflow-hidden bg-slate-100 dark:bg-slate-900 flex flex-col">
       <TopNav />
-      <div className="px-2 py-4 w-full h-[calc(100vh-80px)] grid grid-cols-1 md:grid-cols-[400px,1fr] gap-4 overflow-hidden">
+      <div className={`px-2 py-4 w-full h-[calc(100vh-80px)] grid grid-cols-1 gap-4 overflow-hidden ${selectedBook ? 'md:grid-cols-[400px,1fr,400px]' : 'md:grid-cols-[400px,1fr]'}`}>
         <div className="h-full overflow-hidden">
           <UniversitySidebar
             universities={universities}
@@ -222,33 +314,39 @@ export default function ForumPage() {
                   </select>
                 </div>
 
-                <button
-                  onClick={() => setOpenComposer((v) => !v)}
-                  className={`px-4 h-10 rounded-xl text-white font-medium shadow
-                             ${
-                               openComposer
-                                 ? "bg-rose-600 hover:bg-rose-700 dark:bg-rose-700 dark:hover:bg-rose-800"
-                                 : "bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-700 dark:hover:bg-indigo-800"
-                             }`}
-                >
-                  {openComposer ? (
+                {openComposer && user?.role !== "admin" && (
+                  <button
+                    onClick={handleCloseComposer}
+                    className="px-4 h-10 rounded-xl text-white font-medium shadow bg-rose-600 hover:bg-rose-700 dark:bg-rose-700 dark:hover:bg-rose-800"
+                  >
                     <span className="inline-flex items-center">
                       <X size={16} className="mr-1" /> Zamknij
                     </span>
-                  ) : (
-                    <span className="inline-flex items-center">
-                      <MessageSquarePlus size={16} className="mr-1" /> Dodaj wpis
-                    </span>
-                  )}
-                </button>
+                  </button>
+                )}
               </div>
             </div>
 
-            {openComposer && (
+            {openComposer && user?.role !== "admin" && (
               <form
                 onSubmit={createPost}
                 className="mt-4 rounded-xl border border-indigo-200 dark:border-indigo-600 bg-indigo-50/60 dark:bg-indigo-900/20 p-3 md:p-4"
               >
+                {/* 🔹 sekcja wybranych książek */}
+                {selectedBookIds.length > 0 && (
+                  <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                    <div className="text-sm font-medium text-green-800 dark:text-green-200 mb-2">
+                      Wybrane książki ({selectedBookIds.length}):
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedBookTitles.map((title, index) => (
+                        <div key={index} className="bg-white dark:bg-slate-800 px-3 py-2 rounded-lg border border-green-300 dark:border-green-700 text-sm text-slate-700 dark:text-slate-300">
+                          {title}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <div>
                     <div className="text-xs font-medium text-indigo-800 dark:text-indigo-300 mb-1">
@@ -276,7 +374,7 @@ export default function ForumPage() {
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
                       className="w-full rounded-lg border border-indigo-200 dark:border-indigo-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 px-3 py-2 outline-none"
-                      placeholder="Np. Stypendium Rektora"
+                      placeholder="Np. Czy ta książka jest warta swej ceny?"
                     />
                   </div>
 
@@ -339,10 +437,31 @@ export default function ForumPage() {
               posts.map((p) => (
                 <PostCard
                   key={p.id}
-                  p={p}
-                  currentUser={user}
+                  post={p}
+                  onReactionsChange={(next) => {
+                    // Aktualizuj reakcje w lokalnym stanie
+                    setPosts(prev => prev.map(post => 
+                      post.id === p.id ? { ...post, reactions: next } : post
+                    ));
+                  }}
                   onReact={reactToPost}
                   onDelete={deletePost}
+                  onReport={async (postId) => {
+                    try {
+                      await api.post(`/forum/${postId}/report`, {});
+                      alert("Zgłoszenie wysłane do administratora.");
+                    } catch {}
+                  }}
+                  onRefresh={refresh}
+                  onUserReactionChange={(postId, userReaction) => {
+                    setPosts(prev => prev.map(post => 
+                      post.id === postId 
+                        ? { ...post, user_reaction: userReaction }
+                        : post
+                    ));
+                  }}
+                  selectedBook={selectedBook}
+                  setSelectedBook={setSelectedBook}
                 />
               ))
             ) : (
@@ -380,191 +499,123 @@ export default function ForumPage() {
           </button>
         </div>
         </section>
+
+        {/* Trzecia kolumna - Modal książki */}
+        {selectedBook && (
+          <div className="h-full overflow-hidden">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-600 h-full flex flex-col overflow-hidden">
+            <div className="p-4 border-b shrink-0 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Szczegóły książki</h2>
+              {selectedBook && (
+                <button
+                  onClick={() => setSelectedBook(null)}
+                  className="p-2 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+                  aria-label="Zamknij"
+                >
+                  <X size={20} />
+                </button>
+              )}
+            </div>
+            <div className="flex-1 overflow-y-auto p-4">
+              <div className="space-y-4">
+                {/* Okładka */}
+                <div className="flex justify-center">
+                  {selectedBook.thumbnail ? (
+                    <img
+                      src={selectedBook.thumbnail}
+                      alt={selectedBook.title}
+                      className="w-48 h-64 object-cover rounded-xl shadow-lg"
+                    />
+                  ) : (
+                    <div className="w-48 h-64 bg-slate-200 dark:bg-slate-700 rounded-xl flex items-center justify-center text-slate-500 dark:text-slate-400">
+                      brak okładki
+                    </div>
+                  )}
+                </div>
+
+                {/* Tytuł i autor */}
+                <div>
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2">
+                    {selectedBook.title}
+                  </h3>
+                  <p className="text-lg text-slate-600 dark:text-slate-300">
+                    {selectedBook.authors}
+                  </p>
+                </div>
+
+                {/* Opis */}
+                {selectedBook.description && (
+                  <div>
+                    <h4 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
+                      Opis
+                    </h4>
+                    <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
+                      {selectedBook.description}
+                    </p>
+                  </div>
+                )}
+
+                {/* Szczegóły */}
+                <div className="space-y-2">
+                  {selectedBook.publisher && (
+                    <div>
+                      <span className="font-semibold text-slate-900 dark:text-slate-100">Wydawca:</span>
+                      <span className="ml-2 text-slate-600 dark:text-slate-300">{selectedBook.publisher}</span>
+                    </div>
+                  )}
+                  {selectedBook.published_date && (
+                    <div>
+                      <span className="font-semibold text-slate-900 dark:text-slate-100">Data wydania:</span>
+                      <span className="ml-2 text-slate-600 dark:text-slate-300">{selectedBook.published_date}</span>
+                    </div>
+                  )}
+                  {selectedBook.isbn && (
+                    <div>
+                      <span className="font-semibold text-slate-900 dark:text-slate-100">ISBN:</span>
+                      <span className="ml-2 text-slate-600 dark:text-slate-300">{selectedBook.isbn}</span>
+                    </div>
+                  )}
+                  {selectedBook.pages && (
+                    <div>
+                      <span className="font-semibold text-slate-900 dark:text-slate-100">Liczba stron:</span>
+                      <span className="ml-2 text-slate-600 dark:text-slate-300">{selectedBook.pages}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Gatunek */}
+                {selectedBook.genre && (
+                  <div>
+                    <h4 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
+                      Gatunek
+                    </h4>
+                    <span className="px-3 py-1 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-full text-sm font-medium">
+                      {selectedBook.genre}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+        )}
       </div>
+
+      <ConfirmDialog
+        isOpen={showDeleteDialog}
+        onClose={() => setShowDeleteDialog(false)}
+        onConfirm={handleDeleteConfirm}
+        title="Usuń wpis"
+        message="Czy na pewno chcesz usunąć ten wpis? Ta operacja jest nieodwracalna."
+        confirmText="Usuń"
+        cancelText="Anuluj"
+        type="danger"
+        isLoading={isDeleting}
+      />
     </div>
   );
 }
 
-/* ───────────────────────────── PostCard ───────────────────────────── */
-
-function PostCard({
-  p,
-  currentUser,
-  onReact,
-  onDelete,
-}: {
-  p: Post;
-  currentUser: any;
-  onReact: (postId: number, reaction: string) => Promise<void>;
-  onDelete: (postId: number) => Promise<void>;
-}) {
-  const [comment, setComment] = useState("");
-  const [open, setOpen] = useState(false);
-  const [loadingReplies, setLoadingReplies] = useState(false);
-  const [replies, setReplies] = useState<any[]>([]);
-
-  const canDelete =
-    currentUser && (currentUser.role === "admin" || currentUser.id === p.author.id);
-  const canReport = currentUser && currentUser.id !== p.author.id;
-
-  const loadReplies = async () => {
-    setLoadingReplies(true);
-    try {
-      const r = await api.get(`/forum/${p.id}`);
-      setReplies(r.data?.replies || []);
-    } finally {
-      setLoadingReplies(false);
-    }
-  };
-
-  const toggleComments = async () => {
-    const willOpen = !open;
-    setOpen(willOpen);
-    if (willOpen && replies.length === 0) {
-      await loadReplies();
-    }
-  };
-
-  const submitComment = async () => {
-    const body = comment.trim();
-    if (!body) return;
-    await api.post(`/forum/${p.id}/reply`, { body });
-    setComment("");
-    await loadReplies();
-  };
-
-  return (
-    <article className="rounded-2xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 p-4 shadow-sm">
-      {/* ── Autor, data ─────────────────────── */}
-      <header className="flex items-start justify-between">
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center flex-wrap gap-2 text-sm text-slate-700 dark:text-slate-300">
-            <span className="font-medium">
-              {p.author.first_name} {p.author.last_name}
-            </span>
-            <span
-              className={`text-[11px] px-2 py-0.5 rounded-full border ${
-                p.author.role === "student"
-                  ? "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-600"
-                  : "bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-300 border-rose-300 dark:border-rose-600"
-              }`}
-            >
-              {p.author.academic_title ||
-                (p.author.role === "student"
-                  ? "Student"
-                  : "Pracownik naukowy")}
-            </span>
-            {p.author.university && (
-              <span className="text-[11px] px-2 py-0.5 rounded-full border bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 border-indigo-300 dark:border-indigo-600">
-                {p.author.university}
-              </span>
-            )}
-            <span className="text-[11px] px-2 py-0.5 rounded-full border bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border-green-300 dark:border-green-600">
-              {p.topic}
-            </span>
-            <span className="text-xs text-slate-500 dark:text-slate-400">
-              {formatDateOnly(p.created_at)}
-            </span>
-          </div>
-
-          <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">{p.title}</div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {canDelete && (
-            <button
-              onClick={() => onDelete(p.id)}
-              className="px-2 py-1 rounded-lg bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-600 hover:bg-rose-100 dark:hover:bg-rose-900/30"
-              title="Usuń wpis"
-            >
-              <Trash2 size={16} />
-            </button>
-          )}
-          {canReport && (
-            <button
-              onClick={async () => {
-                try {
-                  await api.post(`/forum/${p.id}/report`, {});
-                  alert("Zgłoszenie wysłane do administratora.");
-                } catch {}
-              }}
-              className="px-2 py-1 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-600 hover:bg-amber-100 dark:hover:bg-amber-900/30"
-              title="Zgłoś wpis"
-            >
-              <Flag size={16} />
-            </button>
-          )}
-        </div>
-      </header>
-
-      {/* ── Opis ─────────────────────── */}
-      {p.summary && (
-        <p className="mt-3 text-slate-800 dark:text-slate-200 whitespace-pre-wrap">{p.summary}</p>
-      )}
-
-      {/* ── Reakcje ─────────────────────── */}
-      <div className="mt-3 flex flex-wrap gap-2">
-        {REACTIONS.map((r) => (
-          <button
-            key={r.key}
-            onClick={() => onReact(p.id, r.key)}
-            className="text-sm px-3 py-1.5 rounded-full bg-white/60 dark:bg-slate-700/60 text-indigo-700 dark:text-indigo-300 hover:bg-white dark:hover:bg-slate-600 shadow-sm"
-            title={r.label}
-          >
-            {r.label}{" "}
-            <span className="font-semibold">{p.reactions?.[r.key] ?? 0}</span>
-          </button>
-        ))}
-      </div>
-
-      {/* ── Komentarze ─────────────────────── */}
-      <div className="mt-3">
-        <button
-          onClick={toggleComments}
-          className="text-sm px-3 py-1.5 rounded-lg bg-gray-50 dark:bg-slate-700 hover:bg-gray-100 dark:hover:bg-slate-600 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300"
-        >
-          {open ? (
-            <ChevronUp className="inline mr-1" size={16} />
-          ) : (
-            <ChevronDown className="inline mr-1" size={16} />
-          )}
-          Komentarze ({p.replies_count})
-        </button>
-      </div>
-
-      {open && (
-        <div className="mt-3">
-          {loadingReplies ? (
-            <div className="text-slate-500 dark:text-slate-400 text-sm">Ładowanie komentarzy…</div>
-          ) : replies.length === 0 ? (
-            <div className="text-slate-500 dark:text-slate-400 text-sm">Brak komentarzy.</div>
-          ) : (
-            <ReplyTree
-              nodes={replies}
-              currentUser={currentUser}
-              reload={loadReplies}
-            />
-          )}
-
-          <div className="mt-3 flex gap-2">
-            <input
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              className="flex-1 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 px-3 py-2"
-              placeholder="Dodaj komentarz…"
-            />
-            <button
-              onClick={submitComment}
-              className="px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-700 dark:hover:bg-indigo-800 text-white"
-            >
-              Skomentuj
-            </button>
-          </div>
-        </div>
-      )}
-    </article>
-  );
-}
 
 /* ──────────────────────── Drzewo odpowiedzi ──────────────────────── */
 
@@ -633,7 +684,7 @@ function ReplyNode({
   const [expanded, setExpanded] = useState(false);
   const canDelete =
     currentUser && (currentUser.role === "admin" || currentUser.id === n.author.id);
-  const canReport = currentUser && currentUser.id !== n.author.id;
+  const canReport = currentUser && currentUser.id !== n.author.id && currentUser.role !== "admin";
 
   const flaggedCls = n.flagged
     ? "border-amber-300 dark:border-amber-600 bg-amber-50/60 dark:bg-amber-900/20"
@@ -701,22 +752,38 @@ function ReplyNode({
             </span>
           </div>
           <div className="flex items-center gap-1">
-            <button
-              onClick={() => doReact("up")}
-              className="text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 px-2 py-1 rounded"
-              title="Lubię to"
-            >
-              <ThumbsUp size={16} />{" "}
-              <span className="ml-1 text-sm">{counts.up ?? 0}</span>
-            </button>
-            <button
-              onClick={() => doReact("down")}
-              className="text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 px-2 py-1 rounded"
-              title="Nie podoba mi się"
-            >
-              <ThumbsDown size={16} />{" "}
-              <span className="ml-1 text-sm">{counts.down ?? 0}</span>
-            </button>
+            {currentUser?.role !== "admin" ? (
+              <>
+                <button
+                  onClick={() => doReact("up")}
+                  className="text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 px-2 py-1 rounded"
+                  title="Lubię to"
+                >
+                  <ThumbsUp size={16} />{" "}
+                  <span className="ml-1 text-sm">{counts.up ?? 0}</span>
+                </button>
+                <button
+                  onClick={() => doReact("down")}
+                  className="text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 px-2 py-1 rounded"
+                  title="Nie podoba mi się"
+                >
+                  <ThumbsDown size={16} />{" "}
+                  <span className="ml-1 text-sm">{counts.down ?? 0}</span>
+                </button>
+              </>
+            ) : (
+              <>
+                {/* Dla adminów - tylko liczniki bez możliwości klikania */}
+                <div className="text-slate-500 dark:text-slate-400 px-2 py-1 cursor-default" title={`Lubię to: ${counts.up ?? 0}`}>
+                  <ThumbsUp size={16} />{" "}
+                  <span className="ml-1 text-sm">{counts.up ?? 0}</span>
+                </div>
+                <div className="text-slate-500 dark:text-slate-400 px-2 py-1 cursor-default" title={`Nie podoba mi się: ${counts.down ?? 0}`}>
+                  <ThumbsDown size={16} />{" "}
+                  <span className="ml-1 text-sm">{counts.down ?? 0}</span>
+                </div>
+              </>
+            )}
             {canReport && (
               <button
                 onClick={doReport}
@@ -740,7 +807,7 @@ function ReplyNode({
 
         <div className="mt-1 whitespace-pre-wrap break-words text-slate-900 dark:text-slate-100">{n.body}</div>
         <div className="mt-2 flex items-center gap-2">
-          {depth === 0 && (
+          {depth === 0 && currentUser?.role !== "admin" && (
             <button
               onClick={() => setOpenReply((v) => !v)}
               className="text-xs px-2 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-600"
@@ -762,7 +829,7 @@ function ReplyNode({
       {depth === 0 && (n.children?.length || openReply) ? (
         <div className="pl-4 border-l border-slate-200 dark:border-slate-600">
           {expanded ? children : null}
-          {openReply && (
+          {openReply && currentUser?.role !== "admin" && (
             <div className="px-3 py-2">
               <div className="mt-2 flex items-center gap-2">
                 <CornerDownRight size={16} className="text-slate-400 dark:text-slate-500" />

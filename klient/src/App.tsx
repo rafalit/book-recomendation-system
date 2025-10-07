@@ -9,6 +9,7 @@ import ForumPage from "./pages/ForumPage";
 import BooksPage from "./pages/BooksPage";
 import RankingsPage from "./pages/RankingsPage";   
 import ProfilePage from "./pages/ProfilePage";
+import AdminPage from "./pages/AdminPage";
 import ProtectedRoute from "./components/router/ProtectedRoute";
 import { AuthProvider } from "./components/auth/AuthContext";
 
@@ -80,8 +81,17 @@ function App() {
             }
           />
 
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute>
+                <AdminPage />
+              </ProtectedRoute>
+            }
+          />
+
           {/* fallback */}
-          <Route path="*" element={<Navigate to="/home" replace />} />
+          <Route path="*" element={<Navigate to="/books" replace />} />
         </Routes>
       </Router>
     </AuthProvider>

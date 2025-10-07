@@ -57,19 +57,42 @@ export default function EventsPage() {
     const run = async () => {
       setLoading(true);
       try {
-        const params: any = {};
-        if (selected !== "wszystkie") params.uni = selected;
-        if (filters.category) params.category = filters.category;
-        if (filters.online === "online") params.online = true;
-        if (filters.online === "offline") params.online = false;
+        let arr: EventItem[] = [];
 
-        const {from, to} = applyRange(filters.range);
-        if (from) params.date_from = from;
-        if (to) params.date_to = to;
+        if (selected === "wszystkie") {
+          // 🚀 Użyj nowego endpointu /events/multi z deduplikacją
+          if (!universities.length) { setRaw([]); return; }
+          const params: any = {
+            q: universities.join(","),
+            limit_each: 20
+          };
+          if (filters.category) params.category = filters.category;
+          if (filters.online === "online") params.online = true;
+          if (filters.online === "offline") params.online = false;
 
-        // backend ma search param q; użyjemy po pobraniu (prościej na start)
-        const r = await api.get<EventItem[]>("/events", { params });
-        let arr = r.data;
+          const {from, to} = applyRange(filters.range);
+          if (from) params.date_from = from;
+          if (to) params.date_to = to;
+
+          const r = await api.get<Record<string, EventItem[]>>("/events/multi", { params });
+          // Połącz wszystkie wydarzenia z wszystkich uczelni
+          arr = Object.values(r.data).flat();
+        } else {
+          // Dla konkretnej uczelni użyj standardowego endpointu
+          const params: any = { uni: selected };
+          if (filters.category) params.category = filters.category;
+          if (filters.online === "online") params.online = true;
+          if (filters.online === "offline") params.online = false;
+
+          const {from, to} = applyRange(filters.range);
+          if (from) params.date_from = from;
+          if (to) params.date_to = to;
+
+          const r = await api.get<EventItem[]>("/events", { params });
+          arr = r.data;
+        }
+
+        // Filtracja tekstowa (lokalnie)
         if (filters.query.trim()) {
           const q = filters.query.toLowerCase();
           arr = arr.filter(e =>
@@ -84,7 +107,7 @@ export default function EventsPage() {
       }
     };
     run();
-  }, [selected, filters]);
+  }, [selected, filters, universities]);
 
   const categories = useMemo(() => {
     const s = new Set<string>();
@@ -123,7 +146,7 @@ export default function EventsPage() {
             ) : raw.length ? (
               raw.map(e => <EventCard key={e.id} ev={e} />)
             ) : (
-              <div className="text-slate-600 dark:text-slate-300">Brak wydarzeń dla wybranych filtrów.</div>
+              <div className="text-slate-600 dark:text-slate-300">Brak wydarzeń o książkach dla wybranych filtrów.</div>
             )}
           </div>
         </section>

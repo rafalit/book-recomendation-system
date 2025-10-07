@@ -17,8 +17,9 @@ from .api.routes_news import router as news_router
 from .api.routes_debug import router as debug_router
 from .api.routes_forum import router as forum_router
 from .api.routes_notifications import router as notif_router
-from.api.routes_books import router as books_router
+from .api.routes_books import router as books_router
 from .api.routes_rankings import router as routes_rankings
+from .api.routes_admin import router as admin_router
 
 # ── Init DB metadata (migrations docelowo przez Alembic, ale na razie OK)
 Base.metadata.create_all(bind=engine)
@@ -45,6 +46,7 @@ app.include_router(forum_router)
 app.include_router(notif_router)
 app.include_router(books_router)
 app.include_router(routes_rankings)
+app.include_router(admin_router)
 
 # ── Graceful shutdown of shared HTTP client
 @app.on_event("shutdown")

@@ -1,14 +1,15 @@
 from datetime import date
-from sqlalchemy import Column, Date, Integer, String, Text, Boolean, ForeignKey, Enum, UniqueConstraint, func
+from sqlalchemy import Column, Date, Integer, String, Text, Boolean, ForeignKey, Enum, UniqueConstraint, func, Table
 from sqlalchemy.orm import relationship
 from app.db.database import Base
 
 class ForumTopic(str, Enum):
-    # dopisz co chcesz, to są przykładowe
-    AI = "AI"
-    energetyka = "Energetyka"
-    dydaktyka = "Dydaktyka"
-    stypendia = "Stypendia"
+    # Kategorie związane z książkami
+    dyskusja_ksiazki = "Dyskusja o książce"
+    recenzja = "Recenzja"
+    pytanie = "Pytanie o książkę"
+    rekomendacja = "Rekomendacja"
+    wymiana = "Wymiana książek"
     ogloszenia = "Ogłoszenia"
 
 class ReactionType(str, Enum):
@@ -18,6 +19,14 @@ class ReactionType(str, Enum):
     love = "love"
     insightful = "insightful"
     funny = "funny"
+
+# Tabela asocjacyjna dla powiązania postów z książkami
+forum_post_books = Table(
+    'forum_post_books',
+    Base.metadata,
+    Column('post_id', Integer, ForeignKey('forum_posts.id', ondelete='CASCADE'), primary_key=True),
+    Column('book_id', Integer, ForeignKey('books.id', ondelete='CASCADE'), primary_key=True)
+)
 
 class ForumPost(Base):
     __tablename__ = "forum_posts"
@@ -47,24 +56,29 @@ class ForumPost(Base):
         cascade="all, delete-orphan",
         passive_deletes=True,
     )
+    books = relationship(
+        "Book",
+        secondary=forum_post_books,
+        back_populates="forum_posts"
+    )
 
 class ForumReply(Base):
     __tablename__ = "forum_replies"
     id = Column(Integer, primary_key=True)
-    post_id = Column(Integer, ForeignKey("forum_posts.id"), nullable=False)
+    post_id = Column(Integer, ForeignKey("forum_posts.id", ondelete="CASCADE"), nullable=False)
     author_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     body = Column(Text, nullable=False)
     created_at = Column(Date, default=date.today)
     is_deleted = Column(Boolean, default=False)            
 
-    parent_id = Column(Integer, ForeignKey("forum_replies.id"), nullable=True)
+    parent_id = Column(Integer, ForeignKey("forum_replies.id", ondelete="CASCADE"), nullable=True)
     parent = relationship("ForumReply", remote_side="ForumReply.id", backref="children")
     post = relationship("ForumPost", back_populates="replies")
     author = relationship("User")                            
 
 class ForumReplyReaction(Base):
     __tablename__ = "forum_reply_reactions"
-    reply_id = Column(Integer, ForeignKey("forum_replies.id"), primary_key=True)
+    reply_id = Column(Integer, ForeignKey("forum_replies.id", ondelete="CASCADE"), primary_key=True)
     user_id  = Column(Integer, ForeignKey("users.id"), primary_key=True)
     type     = Column(String, nullable=False)  # "up"|"down"
     created_at = Column(Date, default=date.today)
@@ -77,7 +91,7 @@ class ForumReplyReaction(Base):
 class ForumReplyReport(Base):
     __tablename__ = "forum_reply_reports"
     id = Column(Integer, primary_key=True)
-    reply_id = Column(Integer, ForeignKey("forum_replies.id"), index=True, nullable=False)
+    reply_id = Column(Integer, ForeignKey("forum_replies.id", ondelete="CASCADE"), index=True, nullable=False)
     reporter_id = Column(Integer, ForeignKey("users.id"), index=True, nullable=False)
     reason = Column(String, nullable=True)
     created_at = Column(Date, default=date.today)
@@ -88,7 +102,7 @@ class ForumReplyReport(Base):
 
 class ForumReaction(Base):
     __tablename__ = "forum_reactions"
-    post_id = Column(Integer, ForeignKey("forum_posts.id"), primary_key=True)
+    post_id = Column(Integer, ForeignKey("forum_posts.id", ondelete="CASCADE"), primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id"), primary_key=True)
     type = Column(String, nullable=False)  # ReactionType
     created_at = Column(Date, default=date.today)
@@ -102,7 +116,7 @@ class ForumReaction(Base):
 class ForumReport(Base):
     __tablename__ = "forum_reports"
     id = Column(Integer, primary_key=True)
-    post_id = Column(Integer, ForeignKey("forum_posts.id"), index=True, nullable=False)
+    post_id = Column(Integer, ForeignKey("forum_posts.id", ondelete="CASCADE"), index=True, nullable=False)
     reporter_id = Column(Integer, ForeignKey("users.id"), index=True, nullable=False)
     reason = Column(String, nullable=True)
     created_at = Column(Date, default=date.today)
